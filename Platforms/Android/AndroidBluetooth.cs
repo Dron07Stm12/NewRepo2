@@ -1,0 +1,600 @@
+﻿using Android;
+using Android.App;
+using Android.Content;  
+using Android.Bluetooth;
+using Android.Util;
+using Android.Content.PM;
+using Android.OS;
+using Android.Provider; 
+using Android.Widget;
+using AndroidX.Core.App;
+using AndroidX.Core.Content;
+using Scb_Electronmash.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+
+namespace Scb_Electronmash.Platforms.Android
+{
+    public class AndroidBluetooth : IBluetooth_service
+    {
+
+        private BluetoothAdapter? _adapter;
+        private Context? _context;
+        private BroadcastReceiver _receiver;
+        private BroadcastReceiver? _stateReceiver;
+        public  BluetoothSocket? bluetoothSocket;
+        private CancellationTokenSource? _readCts;
+
+#pragma warning disable CS8618 // Поле, не допускающее значения NULL, должно содержать значение, отличное от NULL, при выходе из конструктора. Рассмотрите возможность добавления модификатора "required" или объявления значения, допускающего значение NULL.
+        public AndroidBluetooth()
+#pragma warning restore CS8618 // Поле, не допускающее значения NULL, должно содержать значение, отличное от NULL, при выходе из конструктора. Рассмотрите возможность добавления модификатора "required" или объявления значения, допускающего значение NULL.
+        {
+#pragma warning disable CA1422 // Проверка совместимости платформы
+            _adapter = BluetoothAdapter.DefaultAdapter;
+#pragma warning restore CA1422 // Проверка совместимости платформы
+            _context = Platform.AppContext;//это глобальный контекст приложения, не привязанный к окну/экрану (Activity).
+
+
+            // формируем intent filter и регистрируем ресивер для отслеживания изменений состояния Bluetooth
+            try
+            {
+                if (_context != null)
+                {
+                    _stateReceiver = new BroadcastReceiverStateChanged(this);
+                    var stateFilter = new IntentFilter(BluetoothAdapter.ActionStateChanged);
+                    _context.RegisterReceiver(_stateReceiver, stateFilter);
+                }
+            }
+            catch
+            {
+                // безопасно игнорируем ошибки регистрации (например, если контекст ещё не готов)
+            }
+
+
+
+
+        }
+
+        //        Что делает StartScanningAsync
+
+        //Проверяет наличие адаптера и что он включён.
+        //Берёт активность через Platform.CurrentActivity as MainActivity (если activity == null — возвращает false).
+        //Запрашивает(асинхронно) runtime‑разрешения через BluetoothPermissionsHelper.
+        //Если был ранее зарегистрированный _receiver — отписывается от него и очищает поле.
+        //Создаёт новый экземпляр Device_Receiver, передавая в конструктор два делегата:
+        //делегат для каждого найденного устройства — внутри него ты вызываешь событие DeviceDiscovered?.Invoke(onDeviceFound);
+        //        делегат для окончания discovery — внутри него вызываешь DiscoveryFinished?.Invoke();
+        //        Формирует IntentFilter(ActionFound + ActionDiscoveryFinished).
+        //Регистрирует ресивер в _context: _context.RegisterReceiver(_receiver, filter);
+        //Запускает _adapter.StartDiscovery() — асинхронный inquiry, результаты придут в BroadcastReceiver.
+
+
+//        Что такое _receiver с делегатами
+
+//_receiver — экземпляр твоего класса Device_Receiver.В его конструкторе ты передаёшь два делегата(Action<Device_info> и Action).
+//Device_Receiver реализует BroadcastReceiver.OnReceive и при получении интента парсит данные(например, BluetoothDevice при ActionFound), создаёт Device_info и вызывает переданный делегат: _onDeviceFound?.Invoke(device_info).
+//Это фактически «указатели на методы» — ссылки на функции, которые будут вызваны при поступлении соответствующего Broadcast.
+        public event Action<Device_info> DeviceDiscovered;  
+        public event Action DiscoveryFinished;
+        public event Action<bool> BluetoothStateChanged;
+        public async Task<bool> StartScanningAsync()
+        {
+            if (_adapter == null || !_adapter.IsEnabled)
+                return false;
+
+            // Platform.CurrentActivity возвращает тип Activity,
+            //а  код ожидает именно мой класс активности — MainActivity.
+           // Оператор as пытается привести объект к типу MainActivity.
+           //Если привести не удалось(например, если активити — это не твой класс, а другой) — результат будет null, а не Exception.
+            var activity = Platform.CurrentActivity as MainActivity;
+            if (activity == null)
+                return false;
+            // Запрашиваем разрешения у пользователя - если их ещё нет
+            bool granted = await BluetoothPermissionsHelper.RequestBluetoothPermissionsAsync(activity);
+            if (!granted)
+                return false;
+            //Очистка старого Receiver (если был)
+            if (_receiver != null)
+            {
+#pragma warning disable CS8602 // Разыменование вероятной пустой ссылки.
+#pragma warning disable CA1416 // Проверка совместимости платформы
+                _context.UnregisterReceiver(_receiver);
+#pragma warning restore CA1416 // Проверка совместимости платформы
+#pragma warning restore CS8602 // Разыменование вероятной пустой ссылки.
+                _receiver = null;
+            }
+
+            // Создаём новый ресивер и передаём ему два делегата:
+            //  - при обнаружении устройства вызывается DeviceDiscovered (если кто-то на него подписан)
+            //  - при завершении обнаружения вызывается DiscoveryFinished
+            // Итого: да — эти анонимные делегаты — и есть те «методы», которые будут вызываться внутри _receiver
+            // и которые в свою очередь триггерят события.
+            _receiver = new Device_Receiver(
+
+                delegate (Device_info onDeviceFound) { DeviceDiscovered?.Invoke(onDeviceFound);},
+                delegate () { DiscoveryFinished?.Invoke();}
+              
+            );
+            // Формируем фильтр интентов: интересуют события найденного устройства и завершения поиска.
+            IntentFilter filter = new IntentFilter(BluetoothDevice.ActionFound);//// уведомления о найденных устройствах
+            filter.AddAction(BluetoothAdapter.ActionDiscoveryFinished); // Добавляем фильтр для события уведомление об окончании discovery
+          
+            // Регистрируем ресивер в контексте приложения. После регистрации он будет получать указанные Broadcast'ы.
+            _context.RegisterReceiver(_receiver, filter);
+            //// Запускаем процесс классического Bluetooth-сканирования (inquiry). Это асинхронный процесс, результаты придут через BroadcastReceiver.
+            _adapter.StartDiscovery();
+
+
+            // Toast.MakeText(_context, "Сканирование началось", ToastLength.Short).Show();
+            // Возвращаем true — сканирование успешно инициировано (фактические устройства будут приходить в событии DeviceDiscovered).
+            return true;
+        }
+
+
+        public Task<bool> IsBluetoothEnabledAsync()
+        {
+            bool enabled = _adapter != null && _adapter.IsEnabled;
+            return Task.FromResult(enabled);
+        }
+
+
+
+
+
+
+        public async Task<bool> OnOffBluetooth(bool turnOn)
+        {
+            // Проверяем, существует ли Bluetooth-адаптер на устройстве.
+            if (_adapter == null) return false; // Нет Bluetooth адаптера
+
+            // Определяем, современный ли Android (13+).
+            bool isModernAndroid = Build.VERSION.SdkInt >= BuildVersionCodes.Tiramisu; // Android 13+
+
+            // Если нужно включить Bluetooth.
+            if (turnOn)
+            {
+                // Если Bluetooth уже включён, ничего делать не надо.
+                if (_adapter.IsEnabled)
+                    return true; // Уже включён, возвращаем успех
+
+                // Для Android 13+ нельзя включить программно — открываем настройки Bluetooth.
+                if (isModernAndroid)
+                {
+                    var intent = new Intent(Settings.ActionBluetoothSettings); // Формируем интент для открытия настроек Bluetooth
+                    intent.AddFlags(ActivityFlags.NewTask); // Открыть настройки в новом task (важно для контекста не-Activity)
+                    _context?.StartActivity(intent); // Запускаем настройки Bluetooth
+                    return false; // Пользователь должен включить Bluetooth вручную
+                }
+                else
+                {
+                    // Программно включаем Bluetooth (Android < 13)
+                    bool enabled = _adapter.Enable(); // Отправляем команду на включение Bluetooth
+                    int tries = 10; // Счётчик попыток ожидания включения
+                    while (!_adapter.IsEnabled && tries-- > 0)
+                        await Task.Delay(300); // Ждём, пока Bluetooth включится (не сразу)
+                    return _adapter.IsEnabled; // Возвращаем, удалось ли включить
+                }
+            }
+            // Если нужно выключить Bluetooth.
+            else // turnOn == false, выключить Bluetooth
+            {
+                // Если Bluetooth уже выключен, ничего делать не надо.
+                if (!_adapter.IsEnabled)
+                    return true; // Уже выключен, возвращаем успех
+
+                // Для Android 13+ нельзя выключить программно — открываем настройки Bluetooth.
+                if (isModernAndroid)
+                {
+                    var intent = new Intent(Settings.ActionBluetoothSettings); // Формируем интент для открытия настроек Bluetooth
+                    intent.AddFlags(ActivityFlags.NewTask); // Открыть настройки в новом task
+                    _context?.StartActivity(intent); // Запускаем настройки Bluetooth
+                    return false; // Пользователь должен выключить Bluetooth вручную
+                }
+                else
+                {
+                    // Программно выключаем Bluetooth (Android < 13)
+                    bool disabled = _adapter.Disable(); // Отправляем команду на выключение Bluetooth
+                    int tries = 10; // Счётчик попыток ожидания выключения
+                    while (_adapter.IsEnabled && tries-- > 0)
+                        await Task.Delay(300); // Ждём, пока Bluetooth выключится (не сразу)
+                    return !_adapter.IsEnabled; // Возвращаем, удалось ли выключить
+                }
+            }
+        }
+
+        // CHANGED: вызываем метод владельца, чтобы событие вызывалось из типа AndroidBluetooth
+        public void RaiseBluetoothStateChanged(bool enabled)
+        {
+            BluetoothStateChanged?.Invoke(enabled);
+        }
+
+        //public async Task<bool> ConnectToDeviceAsync(Device_info deviceInfo)
+        //{
+        //    // Получаем удалённое устройство по его MAC-адресу.
+        //    var device = _adapter?.GetRemoteDevice(deviceInfo.Address);
+        //    // Устройство не найдено
+        //    if (device == null) return false;
+
+        //    // Отменяем сканирование перед подключением
+        //    _adapter?.CancelDiscovery();
+
+
+        //    // Создаём сокет для подключения по стандартному UUID SPP.
+        //    bluetoothSocket = device.CreateRfcommSocketToServiceRecord(Java.Util.UUID.FromString("00001101-0000-1000-8000-00805F9B34FB"));
+        //    // Пытаемся подключиться.
+
+        //    if (Build.VERSION.SdkInt > BuildVersionCodes.R && ActivityCompat.CheckSelfPermission(_context, Manifest.Permission.BluetoothConnect) != Permission.Granted)
+        //    {
+
+
+        //        //🔸 Запрашиваем разрешение на BluetoothConnect
+        //        //🔸 Что происходит:
+        //        //Вызывается метод RequestPermissions, чтобы запросить разрешение BluetoothConnect.
+        //        //102 — это произвольный код запроса(можешь использовать его позже в OnRequestPermissionsResult).
+        //        ActivityCompat.RequestPermissions(Microsoft.Maui.ApplicationModel.Platform.CurrentActivity, new string[] { Manifest.Permission.BluetoothConnect }, 102);
+        //    }
+        //    if (Build.VERSION.SdkInt <= BuildVersionCodes.R && ActivityCompat.CheckSelfPermission(_context, Manifest.Permission.Bluetooth) != Permission.Granted)
+        //    {
+        //        ActivityCompat.RequestPermissions(Microsoft.Maui.ApplicationModel.Platform.CurrentActivity, new string[] { Manifest.Permission.Bluetooth }, 102);
+
+        //    }
+
+        //    //🔹 Дополнительная проверка для Android 12+ (SDK >= S, т.е. API 31)
+        //    if (Build.VERSION.SdkInt >= BuildVersionCodes.S)
+        //    {
+
+        //        //🔸 Запрашиваем разрешение на BluetoothScan и BluetoothConnect
+
+        //        if (ContextCompat.CheckSelfPermission(Platform.CurrentActivity, Manifest.Permission.BluetoothScan) != Permission.Granted ||
+        //            ContextCompat.CheckSelfPermission(Platform.CurrentActivity, Manifest.Permission.BluetoothConnect) != Permission.Granted)
+        //        {
+        //            //Запрашиваются оба разрешения одновременно.
+        //            ActivityCompat.RequestPermissions(Platform.CurrentActivity, new string[]
+        //            {
+        //        Manifest.Permission.BluetoothScan,
+        //        Manifest.Permission.BluetoothConnect
+        //            }, 1);
+        //        }
+        //    }
+
+
+
+
+        //    if (bluetoothSocket == null) return false;
+        //    await Task.Run(bluetoothSocket.Connect);
+        //    //await bluetoothSocket.ConnectAsync();
+
+        //    return bluetoothSocket.IsConnected; 
+        //}
+
+
+        ////////////////////
+        private void StartReadLoop(CancellationToken token, BluetoothSocket? socket)
+        {
+            if (socket == null) return;
+
+            Task.Run(() =>
+            {
+                var buffer = new byte[1024];
+                try
+                {
+                    var stream = socket.InputStream;
+                    while (!token.IsCancellationRequested)
+                    {
+                        int read = 0;
+                        try
+                        {
+                            read = stream.Read(buffer, 0, buffer.Length);
+                        }
+                        catch (Java.IO.IOException ioEx)
+                        {
+                            Log.Error("BTPerms", $"Read failed (IOException), socket may be closed: {ioEx}");
+                            break;
+                        }
+                        catch (Exception ex)
+                        {
+                            Log.Error("BTPerms", $"Read loop exception: {ex}");
+                            break;
+                        }
+
+                        if (read <= 0)
+                        {
+                            Log.Warn("BTPerms", $"Read returned {read} — socket closed or no data");
+                            break;
+                        }
+
+                        var received = Encoding.UTF8.GetString(buffer, 0, read);
+                        Log.Info("BTPerms", $"Received: {received}");
+
+                        // Если нужно обновлять UI:
+                        // MainThread.BeginInvokeOnMainThread(() => { /* обновить элементы UI */ });
+                    }
+                }
+                finally
+                {
+                    Log.Info("BTPerms", "Read loop ended, closing socket");
+                    try { socket.Close(); } catch { }
+                }
+            }, token);
+        }
+
+
+
+
+
+
+        // заменяем текущий ConnectToDeviceAsync на этот вариант
+        public async Task<bool> ConnectToDeviceAsync(Device_info deviceInfo)
+        {
+
+            // Получаем удалённое устройство по его MAC-адресу.
+            // используется условный оператор ?. — если _adapter == null, device будет null. 
+            // Что делает: у адаптера Bluetooth (поле _adapter) вызывается GetRemoteDevice с MAC-адресом.
+            // Возвращает объект BluetoothDevice, представляющий удалённое устройство.
+            // нужен объект BluetoothDevice для создания сокета и подключения
+            var device = _adapter?.GetRemoteDevice(deviceInfo.Address);
+            // Устройство не найдено
+            if (device == null)
+            {
+                Log.Error("BTPerms", $"GetRemoteDevice returned null for {deviceInfo?.Address}");
+                return false;
+            }
+
+            // //try/catch: если отмена discovery вызовет исключение, оно будет поймано и залогировано как предупреждение.
+            try
+            {
+                // отменяет текущее Bluetooth discovery (сканирование).
+                _adapter?.CancelDiscovery();
+                // Логирование: Info о том, что отмена вызвана.           
+                Log.Info("BTPerms", "CancelDiscovery called before connect");
+            }
+            catch (Exception ex)
+            {
+                Log.Warn("BTPerms", $"CancelDiscovery failed: {ex}");
+            }
+            // Стандартный UUID для Serial Port Profile (SPP)   
+            Java.Util.UUID sppUuid = Java.Util.UUID.FromString("00001101-0000-1000-8000-00805F9B34FB");
+            // Локальная переменная для сокета
+            // создание сокета локально, а не сразу присваивание глобальному полю — удобнее при ошибках и закрытии.
+            BluetoothSocket localSocket = null;
+
+            try
+            {
+                // Создаём небезопасный RFCOMM сокет для подключения к устройству по SPP UUID
+                // Небезопасный означает, что не используется шифрование или аутентификация
+                // CreateInsecureRfcommSocketToServiceRecord пропускает часть безопасной шифровки/аутентификации,
+                // часто проще для старых модулей (HC-06). CreateRfcommSocketToServiceRecord (secure) требует pairing/secure channel.
+                localSocket = device.CreateInsecureRfcommSocketToServiceRecord(sppUuid);
+                
+
+                // Проверка на null (хотя CreateInsecure... обычно не возвращает null)
+                if (localSocket == null)
+                {
+                    Log.Error("BTPerms", "localSocket is null");
+                    return false;
+                }
+
+                // создание задачи для подключения сокета (ложим ее в пул потоков) и получаем маркер task
+                // создаёт задачу, выполняющую вызов Connect() в пуле потоков, и возвращает объект Task, который служит «маркером» (handle) для этой фоновой работы
+                Task task = Task.Run(delegate () { localSocket.Connect(); });
+
+                //  var connectTask = Task.Run(() => localSocket.Connect());
+                // Ждём либо завершения подключения, либо таймаута в 14 секунд  
+                var completed = await Task.WhenAny(task, Task.Delay(14000)); // 14s timeout
+              //Если первой завершилась Task.Delay (т.е. connect не успел за 14s), логируем timeout, закрываем socket и возвращаем false.
+              //закрывать локальный сокет после таймаута важно, иначе ресурс остаётся открытым и мешает следующим попыткам.
+                if (completed != task)
+                {
+                    Log.Error("BTPerms", "Connect timeout");
+                    try { localSocket.Close(); } catch { }
+                    return false;
+                }
+
+                ///////////////
+                // Здесь completed == task — проверим его состояние
+                if (task.IsCompletedSuccessfully)
+                {
+                    // Удача — можно продолжать
+                    bluetoothSocket = localSocket;
+                }
+                else if (task.IsCanceled)
+                {
+                    // Отменено
+                    Log.Warn("BTPerms", "Connect was canceled");
+                    try { localSocket.Close(); } catch { }
+                    return false;
+                }
+                else if (task.IsFaulted)
+                {
+                    // Упало с исключением — Exception хранится в connectTask.Exception (AggregateException)
+                    var agg = task.Exception; // AggregateException
+                    var ex = agg?.GetBaseException(); // реальная причина
+                    Log.Error("BTPerms", $"Connect failed: {ex}");
+                    try { localSocket.Close(); } catch { }
+                    return false;
+                }
+
+                ///////////////
+               
+                //await task;
+
+                //if (!localSocket.IsConnected)
+                //{
+                //    Log.Error("BTPerms", "Socket not connected after Connect");
+                //    try { localSocket.Close(); } catch { }
+                //    return false;
+                //}
+
+                //// Сохранить socket в поле класса и запустить read-loop
+                //bluetoothSocket = localSocket;
+
+                // Запускаем read-loop в фоне
+                _readCts?.Cancel();
+                _readCts = new CancellationTokenSource();
+                // запускаем цикл чтения в фоне
+                StartReadLoop(_readCts.Token, bluetoothSocket);
+
+                Log.Info("BTPerms", $"Socket connected to {device.Address} name={device.Name}");
+                return true;
+            }
+            catch (Java.IO.IOException ioEx)
+            {
+                Log.Error("BTPerms", $"IOException during connect/read: {ioEx}");
+                try { localSocket?.Close(); } catch { }
+                return false;
+            }
+            catch (Exception ex)
+            {
+                Log.Error("BTPerms", $"Exception during connect: {ex}");
+                try { localSocket?.Close(); } catch { }
+                return false;
+            }
+        }
+
+
+
+
+
+
+    }
+
+
+    // ADDED: простой receiver для ActionStateChanged
+    public class BroadcastReceiverStateChanged : BroadcastReceiver
+    {
+        public readonly AndroidBluetooth _owner;
+        public BroadcastReceiverStateChanged(AndroidBluetooth owner) => _owner = owner;
+
+        public override void OnReceive(Context context, Intent intent)
+        {
+            if (intent?.Action == BluetoothAdapter.ActionStateChanged)
+            {
+                int state = intent.GetIntExtra(BluetoothAdapter.ExtraState, -1);
+                bool enabled = (state == (int)State.On);
+                // CHANGED: вызываем метод владельца, чтобы событие вызывалось из типа AndroidBluetooth
+                _owner.RaiseBluetoothStateChanged(enabled);
+            }
+        }
+    }
+
+
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// ADDED: минимальный метод для проверки состояния адаптера
+//public Task<bool> IsBluetoothEnabledAsync()
+//{
+//    bool enabled = _adapter != null && _adapter.IsEnabled;
+//    return Task.FromResult(enabled);
+//}
+
+
+
+
+
+
+
+
+
+
+
+//public async Task<bool> OnOffBluetooth()
+//{
+//    if (_adapter == null) { return false; }//Проверяем, существует ли объект BluetoothAdapter.
+
+
+//    if (!_adapter.IsEnabled)
+//    {
+//        // Проверка версии Android
+//        bool isModernAndroid = Build.VERSION.SdkInt >= BuildVersionCodes.Tiramisu; // Android 13+
+//        if (isModernAndroid)
+//        {
+//            var intent = new Intent(Settings.ActionBluetoothSettings);//это запрос к системе открыть настройки Bluetooth.
+//            //эта строка указывает системе Android, что новое Activity, которое будет запущено этим интентом,
+//            //должно быть создано в новом стеке задач ("new task").
+//            //Это особенно важно, когда ты запускаешь интент из контекста,
+//            //который не является Activity(например, из ApplicationContext).
+//            intent.AddFlags(ActivityFlags.NewTask);
+//            _context?.StartActivity(intent);
+
+//            return true; // Пользователь должен вручную включить Bluetooth в настройках
+
+//        }
+//        else
+//        {
+//            // Программно включаем Bluetooth
+
+//            // На Android < 13 (старые версии)
+//            // Программно включаем Bluetooth
+//            bool enabled = _adapter.Enable();
+//            return enabled; // Если true — команда на включение отправлена
+//        }
+//        // Проверка версии Android
+
+
+
+//    }
+
+//    else
+//    {
+
+//        // Проверка версии Android
+//        bool isModernAndroid = Build.VERSION.SdkInt >= BuildVersionCodes.Tiramisu; // Android 13+
+//        if (isModernAndroid)
+//        {
+//            var intent = new Intent(Settings.ActionBluetoothSettings);//это запрос к системе открыть настройки Bluetooth.
+//            //эта строка указывает системе Android, что новое Activity, которое будет запущено этим интентом,
+//            //должно быть создано в новом стеке задач ("new task").
+//            //Это особенно важно, когда ты запускаешь интент из контекста,
+//            //который не является Activity(например, из ApplicationContext).
+//            intent.AddFlags(ActivityFlags.NewTask);
+//            _context?.StartActivity(intent);
+
+//            return true; // Пользователь должен вручную включить Bluetooth в настройках
+
+//        }
+//        else
+//        {
+//            // Программно включаем Bluetooth
+
+//            // На Android < 13 (старые версии)
+//            // Программно включаем Bluetooth
+//            bool enabled = _adapter.Disable();
+//            return enabled; // Если true — команда на включение отправлена
+//        }
+
+//    }   
+//    //return true;
+
+//}
+
+
+
+
+
+//Создание нового Receiver
+//_receiver = new Device_Receiver(device =>
+//{
+//    DeviceDiscovered?.Invoke(device);
+//}, () => DiscoveryFinished?.Invoke());
+
+
+

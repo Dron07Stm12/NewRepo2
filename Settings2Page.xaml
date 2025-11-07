@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Scb_Electronmash.Settings2Page"
+             Title="Настройки">
+    <VerticalStackLayout>
+        <Grid ColumnDefinitions="*,Auto"
+              RowDefinitions="Auto,Auto"
+              Padding="0,10,25,0">
+            <!-- Первая строка: Bluetooth -->
+            <Label Text="Bluetooth" 
+                   FontSize="18"
+                   FontAttributes="Bold"
+                   VerticalOptions="Center"
+                   Grid.Row="0"
+                   Grid.Column="0"
+                   Margin="16,0,0,0"/>
+            <Switch x:Name="BluetoothSwitch"
+                    VerticalOptions="Center"
+                    Grid.Row="0"
+                    Grid.Column="1"
+                    ThumbColor="White"
+                    OnColor="#6200EE"
+                    Toggled="OnBluetoothToggled"/>
+
+            <!-- Вторая строка: Scan -->
+            <Label Text="Scan" 
+                   FontSize="18"
+                   FontAttributes="Bold"
+                   VerticalOptions="Center"
+                   Grid.Row="1"
+                   Grid.Column="0"
+                   Margin="16,0,0,0"/>
+            <Switch x:Name="ScanSwitch"
+                    VerticalOptions="Center"
+                    Grid.Row="1"
+                    Grid.Column="1"
+                    ThumbColor="White"
+                    OnColor="#6200EE"
+                    Toggled="OnScanToggled"/>
+        </Grid>
+
+        <!-- Индикатор поиска -->
+        <ActivityIndicator 
+       x:Name="activityIndicator"
+       IsRunning="False"
+       IsVisible="False"
+       Color="#FFFFFF"
+       VerticalOptions="Center"
+       HorizontalOptions="Center"
+       HeightRequest="25"
+       WidthRequest="25"/>
+
+       <!-- 
+        DevicesCollectionView — это сам контрол (CollectionView) в XAML.
+        ItemsSource у этого контролла указывает на коллекцию данных — у тебя _devices.
+        ItemTemplate (DataTemplate) описывает, как визуально отображать каждый элемент этой коллекции. 
+        Для каждого элемента из _devices будет создана одна «ячейка» по ItemTemplate,
+        и BindingContext этой ячейки будет установлен в соответствующий объект Device_info.
+        
+        
+        
+        
+        
+        
+        -->
+        
+
+
+        <!-- Минимальные правки: SelectionMode="None", убрать SelectionChanged, добавить TapGestureRecognizer в шаблон -->
+        <CollectionView x:Name="DevicesCollectionView"
+                ItemsLayout="VerticalList"
+                SelectionMode="None"  
+                HeightRequest="300">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Grid Padding="10">
+                        
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackLayout Orientation="Vertical">
+                            <Label Text="{Binding Name}" FontSize="16" />
+                            <Label Text="{Binding Address}" FontSize="12" TextColor="DarkGreen"/>
+                        </StackLayout>
+
+                        <!-- Добавлен минимальный TapGestureRecognizer -->
+                        <Grid.GestureRecognizers>
+                            
+                            <TapGestureRecognizer Tapped="OnItemTapped"
+                                          CommandParameter="{Binding .}"
+                            />
+                            
+                        </Grid.GestureRecognizers>
+                        
+                    </Grid>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+            <CollectionView.EmptyView>
+                <Label Text="Устройства не найдены" FontSize="16" HorizontalOptions="Center" VerticalOptions="Center" TextColor="Blue"/>
+            </CollectionView.EmptyView>
+        </CollectionView>
+
+
+
+    </VerticalStackLayout>
+</ContentPage>
+
+
+
+<!--<CollectionView x:Name="DevicesCollectionView"
+            ItemsLayout="VerticalList"
+            SelectionMode="Single"
+            SelectionChanged="OnDeviceSelected"
+            HeightRequest="300">
+    <CollectionView.ItemTemplate>
+        <DataTemplate>
+            <Grid Padding="10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <StackLayout Orientation="Vertical">
+                    <Label Text="{Binding Name}" FontSize="16" />
+                    <Label Text="{Binding Address}" FontSize="12" TextColor="DarkGreen"/>
+                </StackLayout>
+            </Grid>
+        </DataTemplate>
+    </CollectionView.ItemTemplate>
+    <CollectionView.EmptyView>
+        <Label Text="Устройства не найдены" FontSize="16" HorizontalOptions="Center" VerticalOptions="Center" TextColor="Blue"/>
+    </CollectionView.EmptyView>
+</CollectionView>-->
+
+
+
+<!--Как это соотносится с твоим кодом (построчно)
+
+XAML:
+<CollectionView x:Name="DevicesCollectionView" ...>
+    <CollectionView.ItemTemplate>
+        <DataTemplate>... {Binding Name} ...</DataTemplate>
+    </CollectionView.ItemTemplate>
+</CollectionView>
+
+C#: private readonly ObservableCollection
+<Device_info>_devices = new ObservableCollection
+    <Device_info>(); ... DevicesCollectionView.ItemsSource = _devices;
+
+Что это значит практично
+
+Когда ты присваиваешь DevicesCollectionView.ItemsSource = _devices;
+CollectionView начинает взять элементы из этой коллекции.
+Для каждого объекта device в _devices:
+MAUI создаст экземпляр DataTemplate (Grid, StackLayout, Label и т.д.).
+Для этого экземпляра установит BindingContext = device.
+Поэтому внутри шаблона {Binding Name} будет эквивалентно device.Name, {Binding Address} → device.Address.
+ObservableCollection
+        <T>нужен потому, что при _devices.Add(...) UI автоматически обновится и добавит новую ячейку. Если бы это был List
+            <T>, CollectionView не получил бы уведомления об изменениях (нужно было бы заново присваивать ItemsSource).-->
