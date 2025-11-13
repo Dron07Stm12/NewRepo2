@@ -1,11 +1,12 @@
 ﻿using Android;
 using Android.App;
-using Android.Content;  
 using Android.Bluetooth;
-using Android.Util;
+using Android.Content;  
 using Android.Content.PM;
+using Android.Health.Connect.DataTypes.Units;
 using Android.OS;
 using Android.Provider; 
+using Android.Util;
 using Android.Widget;
 using AndroidX.Core.App;
 using AndroidX.Core.Content;
@@ -15,7 +16,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
+using static System.Net.Mime.MediaTypeNames;
+//
+//using MauiApp = Microsoft.Maui.Controls.Application;
+//using Application = Android.App.Application;
 
 namespace Scb_Electronmash.Platforms.Android
 {
@@ -28,6 +32,12 @@ namespace Scb_Electronmash.Platforms.Android
         private BroadcastReceiver? _stateReceiver;
         public  BluetoothSocket? bluetoothSocket;
         private CancellationTokenSource? _readCts;
+
+        // поле в классе сервиса
+        private volatile bool _rxRunning = false;
+
+
+
 
 #pragma warning disable CS8618 // Поле, не допускающее значения NULL, должно содержать значение, отличное от NULL, при выходе из конструктора. Рассмотрите возможность добавления модификатора "required" или объявления значения, допускающего значение NULL.
         public AndroidBluetooth()
@@ -211,6 +221,16 @@ namespace Scb_Electronmash.Platforms.Android
         {
             BluetoothStateChanged?.Invoke(enabled);
         }
+
+
+
+
+
+
+
+
+
+
 
         //public async Task<bool> ConnectToDeviceAsync(Device_info deviceInfo)
         //{
@@ -398,7 +418,7 @@ namespace Scb_Electronmash.Platforms.Android
                 // Здесь completed == task — проверим его состояние
                 if (task.IsCompletedSuccessfully)
                 {
-                    // Удача — можно продолжать
+                    // Успешно — можно продолжать
                     bluetoothSocket = localSocket;
                 }
                 else if (task.IsCanceled)
@@ -433,10 +453,10 @@ namespace Scb_Electronmash.Platforms.Android
                 //bluetoothSocket = localSocket;
 
                 // Запускаем read-loop в фоне
-                _readCts?.Cancel();
-                _readCts = new CancellationTokenSource();
-                // запускаем цикл чтения в фоне
-                StartReadLoop(_readCts.Token, bluetoothSocket);
+                //_readCts?.Cancel();
+                //_readCts = new CancellationTokenSource();
+                //// запускаем цикл чтения в фоне
+                //StartReadLoop(_readCts.Token, bluetoothSocket);
 
                 Log.Info("BTPerms", $"Socket connected to {device.Address} name={device.Name}");
                 return true;
@@ -457,8 +477,324 @@ namespace Scb_Electronmash.Platforms.Android
 
 
 
+        ////////////////////////
+        public event Action<string> DataReceived; // 👉 событие для передачи данных в UI
+//        public async Task ReceiverData()
+//        {
+
+////            //включение Foreground Service
+////            _context = Platform.AppContext;
+////            var intent = new Intent(_context, typeof(Bluetooth_Foregraund_service));
+////            if (Build.VERSION.SdkInt >= BuildVersionCodes.O)
+////#pragma warning disable CA1416 // Проверка совместимости платформы
+////                _context.StartForegroundService(intent); // Android 8+
+////#pragma warning restore CA1416 // Проверка совместимости платформы
+////            else
+////                _context.StartService(intent); // Android < 8                  
+
+//            // Буфер для приёма "сырых" байтов из Bluetooth (4096 байт за раз).
+//            byte[] buffer = new byte[4096];
+//            // StringBuilder — для накопления текста, если сообщение приходит не целиком, а частями.
+//            StringBuilder dataBuffer = new StringBuilder();
+
+//            try
+//            {
+
+//                // Берём поток, с которого будем читать. Должен быть уже открыт и готов к чтению.
+//                var _inputStream = bluetoothSocket?.InputStream;
 
 
+//                if (_inputStream == null)
+//                {
+//                    // DataReceived?.Invoke("Ошибка: Bluetooth поток не инициализирован.");
+//                    // _myEvent?.Invoke("Вызов делегата: public delegate void MyEventHandler(string message);");
+//                    // MyEvent.Invoke("не явно реализованное событие");
+//                    //   return;
+//                }
+
+//                // Бесконечный цикл для непрерывного чтения данных, пока соединение активно.
+//                while (true)
+//                {
+
+//                    if (!_adapter.IsEnabled)
+//                    {
+//                        MainThread.BeginInvokeOnMainThread(() => {
+//                            Microsoft.Maui.Controls.Application.Current.MainPage.DisplayAlert("Bluetooth", "Bluetooth is disabled", "OK");
+//                        });
+//                        bluetoothSocket?.Close(); // Закрываем сокет, если адаптер не инициализирован
+//                        _context.UnregisterReceiver(_receiver);
+//                        return;
+//                    }
+
+
+//                    // Делаем небольшую паузу, чтобы не грузить процессор.
+//                    await Task.Delay(100);
+//                    // Проверяем, можно ли читать из потока (соединение не закрыто и поток поддерживает чтение)
+//                    if (_inputStream.CanRead)
+//                    {
+//                        // Читаем данные из потока в буфер.
+//                        int bytesRead = await _inputStream.ReadAsync(buffer, 0, buffer.Length);
+//                        // Если что-то действительно прочитали...
+//                        if (bytesRead > 0)
+//                        {
+//                            // Преобразуем байты в строку (ASCII).
+//                            string part = Encoding.ASCII.GetString(buffer, 0, bytesRead);
+
+//                            // Добавляем прочитанную часть к накопленному тексту.
+//                            dataBuffer.Append(part);
+//                            // Если в пришедшей части есть символ новой строки, значит сообщение завершено.
+//                            if (part.Contains("\n"))
+//                            {
+
+//                                // Собираем полное сообщение, убираем лишние пробелы.
+//                                string completeMessage = dataBuffer.ToString().Trim();
+//                                // 👉 Передаем полученную строку через событие DataReceived.
+//                                // Если в MainPage подписка на это событие — она получит сообщение и обновит label4.
+//                                DataReceived?.Invoke(completeMessage);
+//                                //   if (DataReceived != null) { DataReceived(completeMessage); }
+//                                // Очищаем буфер, чтобы начать накопление следующего сообщения.
+//                                dataBuffer.Clear();
+//                            }
+
+//                        }
+
+
+//                    }
+
+
+
+//                }
+
+//            }
+//            catch (Exception ex)
+//            {
+
+//                // Если возникла ошибка (например, разрыв соединения),
+//                // отправляем сообщение об ошибке через то же событие в UI.
+//                DataReceived?.Invoke($"Error: {ex.Message}");
+//            }
+
+
+
+//        }
+
+        /// ////////////////////////////////////
+      
+        public async Task ReceiverData()
+        {
+            if (_rxRunning) return; // уже запущен
+            _rxRunning = true;
+
+            byte[] buffer = new byte[4096];
+            var input = bluetoothSocket?.InputStream;
+            if (input == null)
+            {
+                DataReceived?.Invoke("Error: InputStream is null");
+                _rxRunning = false;
+                return;
+            }
+
+            var recvBuf = new List<byte>();
+            const byte RESP_START = 0x02;
+            const byte FRAME_STOP = 0x05;
+
+            try
+            {
+                while (_rxRunning)
+                {
+                    if (!_adapter.IsEnabled)
+                    {
+                        DataReceived?.Invoke("Bluetooth disabled, stopping receiver");
+                        try { bluetoothSocket?.Close(); } catch { }
+                        try { _context.UnregisterReceiver(_receiver); } catch { }
+                        break;
+                    }
+
+                    await Task.Delay(30);
+
+                    // Читаем в фоне синхронно — совместимо с Java.IO.InputStream
+                    int bytesRead;
+                    try
+                    {
+                        bytesRead = await Task.Run(() => input.Read(buffer, 0, buffer.Length));
+                    }
+                    catch (Exception readEx)
+                    {
+                        DataReceived?.Invoke($"Receiver read error: {readEx.Message}");
+                        break;
+                    }
+
+                    if (bytesRead <= 0) continue;
+
+                    for (int i = 0; i < bytesRead; i++) recvBuf.Add(buffer[i]);
+
+                    while (true)
+                    {
+                        int start = recvBuf.IndexOf(RESP_START);
+                        if (start == -1)
+                        {
+                            if (recvBuf.Count > 8192) recvBuf.Clear();
+                            break;
+                        }
+
+                        int stop = recvBuf.FindIndex(start + 1, b => b == FRAME_STOP);
+                        if (stop == -1)
+                        {
+                            if (start > 0) recvBuf.RemoveRange(0, start);
+                            break;
+                        }
+
+                        int asciiLen = stop - (start + 1);
+                        if (asciiLen <= 0)
+                        {
+                            recvBuf.RemoveRange(0, stop + 1);
+                            continue;
+                        }
+
+                        byte[] asciiBytes = recvBuf.Skip(start + 1).Take(asciiLen).ToArray();
+                        string asciiHex = System.Text.Encoding.ASCII.GetString(asciiBytes)
+                                               .Replace("\r", "").Replace("\n", "").Trim()
+                                               .ToUpperInvariant();
+
+                        recvBuf.RemoveRange(0, stop + 1);
+
+                        if (asciiHex.Length % 2 != 0)
+                        {
+                            DataReceived?.Invoke($"RX ERROR: odd hex length -> {asciiHex}");
+                            continue;
+                        }
+
+                        byte[] frameBytes;
+                        try
+                        {
+                            frameBytes = new byte[asciiHex.Length / 2];
+                            for (int i = 0; i < frameBytes.Length; i++)
+                                frameBytes[i] = Convert.ToByte(asciiHex.Substring(i * 2, 2), 16);
+                        }
+                        catch
+                        {
+                            DataReceived?.Invoke($"RX ERROR: invalid hex -> {asciiHex}");
+                            continue;
+                        }
+
+                        bool chkOk = false;
+                        if (frameBytes.Length >= 1)
+                        {
+                            int sum = 0;
+                            for (int i = 0; i < frameBytes.Length - 1; i++) sum += frameBytes[i];
+                            chkOk = ((byte)(sum & 0xFF)) == frameBytes[frameBytes.Length - 1];
+                        }
+
+                        string fullHex = BitConverter.ToString(frameBytes).Replace("-", "");
+                        if (chkOk)
+                        {
+                            string payloadHex = frameBytes.Length > 1
+                                ? BitConverter.ToString(frameBytes, 0, frameBytes.Length - 1).Replace("-", "")
+                                : string.Empty;
+                            DataReceived?.Invoke($"RX OK payload={payloadHex} full={fullHex}");
+                        }
+                        else
+                        {
+                            DataReceived?.Invoke($"RX CHK FAIL full={fullHex}");
+                        }
+                    } // parse loop
+                } // outer loop
+            }
+            catch (Exception ex)
+            {
+                DataReceived?.Invoke($"Receiver error: {ex.Message}");
+            }
+            finally
+            {
+                _rxRunning = false;
+            }
+        }
+
+        // метод для остановки приёмника
+        public void StopReceiver()
+        {
+            _rxRunning = false;
+            try { bluetoothSocket?.Close(); } catch { }
+        }
+        ///////////////////////////////////////
+
+
+
+        // событие для очистки данных
+        public event Clear_EventHandler Clear_Devices;
+
+        public async Task ClearData()
+        {
+            // вызываем событие очистки списка устройств
+            Clear_Devices?.Invoke();
+        }
+
+
+
+        //событие для передачи данных
+        public event Action Data_To_Send;
+        //public async Task TransmitterData()
+        //{
+        //    // вызываем событие передачи данных
+        //    Data_To_Send?.Invoke();
+        //}
+
+
+        public async Task TransmitterData()
+        {
+            // Проверяем, что сокет и его поток готовы к записи
+            if (bluetoothSocket == null || bluetoothSocket.OutputStream == null)
+                throw new InvalidOperationException("Bluetooth socket not ready");
+
+            try
+            {
+                string asciiHex = "01010000240501012D"; // команда в ASCII HEX формате
+                //Эти байты будут вставлены в начало и конец буфера как «сырые» (не ASCII). PIC ISR смотрит именно на такие «raw» старт/стоп.
+                byte rawStart = 0x01; // стартовый байт
+                byte rawStop = 0x05;  // стоповый байт
+                // Преобразуем ASCII строку в байты
+                // Преобразует строку в массив байт ASCII: каждый символ строки → один байт с кодом ASCII (например '0' -> 0x30).
+                var asciiBytes = System.Text.Encoding.ASCII.GetBytes(asciiHex);
+
+                // Формируем итоговый массив байт: rawStart + asciiBytes + rawStop - посылки длиной: 1 байт (start) + N ascii байтов + 1 байт (stop)
+                // Создаём конечный буфер 
+                byte[] toSend = new byte[1 + asciiBytes.Length + 1];
+                // Записываем стартовый «сырой» байт в позицию 0.
+                toSend[0] = rawStart;
+                // Копируем ASCII байты в середину буфера (начиная с позиции 1).
+                // Копируем ascii-байты в toSend, начиная с позиции 1 (после rawStart).
+                // Array.Copy безопасен: если asciiBytes.Length соответствует, нижняя граница индексов ok.
+                //  Важный момент: порядок байтов будет: [0] = 0x01, [1] = first ASCII char(0x30), [2] = next ASCII char(0x31), ... — это именно то, что нужно PIC
+                Array.Copy(asciiBytes, 0, toSend, 1, asciiBytes.Length);
+                // Записываем стоповый «сырой» байт в последнюю позицию.
+                // Теперь буфер полностью сформирован и готов к отправке.
+                toSend[toSend.Length - 1] = rawStop;
+                //Получаем поток записи из сокета.
+                var outStream = bluetoothSocket.OutputStream;
+                // Пишем весь буфер в поток.
+                // Асинхронная запись: пишет весь буфер в поток, не блокируя текущий поток (если поток поддерживает асинхронность).
+                await outStream.WriteAsync(toSend, 0, toSend.Length);
+                // Гарантирует, что все буфера потоков будут сброшены и данные реально отправлены (в пределах стека I/O).
+                //Для некоторых реализаций Flush не обязателен, но безопасно его делать
+                await outStream.FlushAsync();
+
+                // не обязательно логгировать через событие — пока пропускаем
+            }
+            catch (Exception ex)
+            {
+                // логируем или пробрасываем — пока покажем в DataReceived или пробросим
+                // MainThread.BeginInvokeOnMainThread(() => DataReceived?.Invoke("Send error: " + ex.Message));
+                throw; // или просто return, если не хотите бросать
+            }
+        }
+
+
+
+
+
+
+
+        /////////////////////////
 
     }
 

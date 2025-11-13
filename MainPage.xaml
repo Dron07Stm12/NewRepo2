@@ -16,23 +16,71 @@
                 Aspect="AspectFit"
                 SemanticProperties.Description="dot net bot in a hovercraft number nine" />
 
-            <!--<Label
-                Text="Hello, World!"
-                Style="{StaticResource Headline}"
-                SemanticProperties.HeadingLevel="Level1" />
+            <Border
+               Stroke="#0B0101"
+               StrokeThickness="2"
+               StrokeShape="RoundRectangle 10"
+               BackgroundColor="#b3d6bf"
+               Padding="10"
+               Margin="5"
+               HeightRequest="180">
 
-            <Label
-                Text="Welcome to &#10;.NET Multi-platform App UI"
-                Style="{StaticResource SubHeadline}"
-                SemanticProperties.HeadingLevel="Level2"
-                SemanticProperties.Description="Welcome to dot net Multi platform App U I" />-->
+                <ScrollView x:Name="scrollView" VerticalOptions="Fill">
+                    <Label x:Name="label4"
+                      Text="Empty text to receive data"
+                      FontAttributes="Bold"    
+                      FontSize="14"
+                      TextColor="Black"
+                      LineBreakMode="WordWrap"
+                      VerticalTextAlignment="Start"
+                      HorizontalTextAlignment="Start" />
+                </ScrollView>
 
-            <Button
+            </Border>
+
+            <Grid Margin="2" ColumnDefinitions="*,*,*" ColumnSpacing="10">
+
+
+                <Button
                 x:Name="CounterBtn"
-                Text="Click me" 
+                Text="Rx" 
+                FontAttributes="Bold"             
+                FontSize="18"
+                TextColor="White"
+                BackgroundColor="#361861"
                 SemanticProperties.Hint="Counts the number of times you click"
                 Clicked="OnCounterClicked"
-                HorizontalOptions="Fill" />
+                HorizontalOptions="Fill" 
+                Grid.Column="0" 
+                />
+
+
+                <Button Margin="5"
+                        Text="Clear data"
+                        FontAttributes="Bold"   
+                        TextColor="#01010d" 
+                        BackgroundColor="#70CBCB"
+                        Clicked="OnClear_Data_Dev"                       
+                        Grid.Column="1" />
+
+
+
+
+
+                <Button Text="Tx"
+                        FontAttributes="Bold" 
+                        FontSize="18"
+                        TextColor="#ffffff"
+                        BackgroundColor="#158715"
+                        Clicked="OnCounterClicked_Tx"
+                        Grid.Column="2"
+                  />
+                
+
+
+            </Grid>
+
+
         </VerticalStackLayout>
     </ScrollView>
 

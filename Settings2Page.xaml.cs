@@ -129,89 +129,137 @@ public partial class Settings2Page : ContentPage
         });
     }
 
+   
 
+    // Добавь этот вспомогательный метод в класс Settings2Page
+    private Task<bool> WaitForBluetoothStateAsync(bool expectedState, int timeoutMs = 2000)
+    {
+        var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        void Handler(bool state)
+        {
+            if (state == expectedState)
+            {
+                // если пришло ожидаемое состояние — завершаем успешно
+                _bluetoothService.BluetoothStateChanged -= Handler;
+                tcs.TrySetResult(true);
+            }
+        }
+
+        // подписываемся на событие
+        _bluetoothService.BluetoothStateChanged += Handler;
+
+        // таймаут
+        var cts = new CancellationTokenSource(timeoutMs);
+        cts.Token.Register(() =>
+        {
+            // отписываемся и завершаем с false по таймауту
+            _bluetoothService.BluetoothStateChanged -= Handler;
+            tcs.TrySetResult(false);
+        });
+
+        return tcs.Task;
+    }
+
+    // Полностью замените текущий OnBluetoothToggled этим методом
     private async void OnBluetoothToggled(object sender, ToggledEventArgs e)
     {
         if (_suppressBluetoothToggle) return;
 
         bool requestedState = e.Value;
-        bool success = await _bluetoothService.OnOffBluetooth(requestedState);
+        bool opResult = false;
 
-        if (!success)
+        try
         {
-            // откатываем переключатель в UI
+            opResult = await _bluetoothService.OnOffBluetooth(requestedState);
+        }
+        catch
+        {
+            opResult = false;
+        }
+
+        // Лог для отладки (временно)
+        System.Diagnostics.Debug.WriteLine($"OnBluetoothToggled: requested={requestedState}, opResult={opResult}");
+
+        // Если OnOffBluetooth возвращает false — скорее всего открылись настройки (Android 13) или нет прав.
+        if (!opResult)
+        {
+            // Обновим UI по текущему состоянию и покажем сообщение о ручном действии
+            bool actualNow = false;
+            try { actualNow = await _bluetoothService.IsBluetoothEnabledAsync(); } catch { actualNow = false; }
+
             MainThread.BeginInvokeOnMainThread(() =>
             {
                 _suppressBluetoothToggle = true;
-                BluetoothSwitch.IsToggled = !requestedState;
+                BluetoothSwitch.IsToggled = actualNow;
                 BluetoothSwitch.ThumbColor = Colors.White;
                 BluetoothSwitch.OnColor = Colors.Green;
                 BluetoothSwitch.BackgroundColor = Colors.Transparent;
-                //BluetoothSwitch.BackgroundColor = Colors.LightGray;
                 _suppressBluetoothToggle = false;
             });
 
             await DisplayAlert("Bluetooth", "Требуется ручное действие или нет разрешений", "OK");
 
-            // опциональный короткий опрос: если пользователь всё же включил Bluetooth в настройках,
-            // обновим UI автоматически в течение ~10–12 секунд
+            // Фоновый опрос заменён на ожидание события: подпишемся и дождёмся изменения (если произойдёт)
             _ = Task.Run(async () =>
             {
-                const int maxTries = 12;
-                for (int i = 0; i < maxTries; i++)
+                const int pollTimeoutSec = 12;
+                var changed = await WaitForBluetoothStateAsync(!actualNow, pollTimeoutSec * 1000);
+                if (changed)
                 {
-                    bool enabled = false;
-                    try { enabled = await _bluetoothService.IsBluetoothEnabledAsync(); } catch { enabled = false; }
-
-                    if (enabled)
+                    // обновим UI если состояние изменилось
+                    MainThread.BeginInvokeOnMainThread(() =>
                     {
-                        MainThread.BeginInvokeOnMainThread(() =>
-                        {
-                            _suppressBluetoothToggle = true;
-                            BluetoothSwitch.IsToggled = true;
-                            BluetoothSwitch.ThumbColor = Colors.White;
-                            BluetoothSwitch.OnColor = Colors.Green;
-                            BluetoothSwitch.BackgroundColor = Colors.Transparent;
-                            _suppressBluetoothToggle = false;
-                        });
-                        break;
-                    }
-
-                    await Task.Delay(1000);
+                        _suppressBluetoothToggle = true;
+                        BluetoothSwitch.IsToggled = !actualNow;
+                        BluetoothSwitch.ThumbColor = Colors.White;
+                        BluetoothSwitch.OnColor = Colors.Green;
+                        BluetoothSwitch.BackgroundColor = Colors.Transparent;
+                        _suppressBluetoothToggle = false;
+                    });
                 }
             });
 
             return;
         }
 
-        // успех — обновляем визуально (цвет/фон)
+        // opResult == true — мы запросили программно изменение состояния.
+        // Подождём событие изменения состояния до короткого таймаута.
+        bool reached = await WaitForBluetoothStateAsync(requestedState, 2000);
+
+        // Если за таймаут событие не пришло — корректируем через опрос адаптера
+        bool actualEnabled = false;
+        if (reached)
+        {
+            actualEnabled = requestedState;
+        }
+        else
+        {
+            try { actualEnabled = await _bluetoothService.IsBluetoothEnabledAsync(); } catch { actualEnabled = false; }
+        }
+
+        // Лог для отладки (временно)
+        System.Diagnostics.Debug.WriteLine($"OnBluetoothToggled: after-wait actualEnabled={actualEnabled}, requested={requestedState}");
+
+        // Обновим UI и покажем окончательное сообщение
         MainThread.BeginInvokeOnMainThread(() =>
         {
+            _suppressBluetoothToggle = true;
+            BluetoothSwitch.IsToggled = actualEnabled;
             BluetoothSwitch.ThumbColor = Colors.White;
             BluetoothSwitch.OnColor = Colors.Green;
             BluetoothSwitch.BackgroundColor = Colors.Transparent;
-            //BluetoothSwitch.BackgroundColor = requestedState ? Colors.Transparent : Colors.LightGray;
+            _suppressBluetoothToggle = false;
         });
 
-        await DisplayAlert("Bluetooth", requestedState ? "Включено" : "Выключено", "OK");
+        await DisplayAlert("Bluetooth", actualEnabled ? "Включено" : "Выключено", "OK");
     }
-    //private async void OnBluetoothToggled(object sender, ToggledEventArgs e)
-    //{
-    //    // e.Value — это новое состояние Switch:
-    //    // true — пользователь включил (ползунок вправо)
-    //    // false — выключил (ползунок влево)
 
 
-    //    if (_suppressBluetoothToggle) return;
-    //    bool b = await _bluetoothService.OnOffBluetooth(e.Value);
 
-    //    if (!b)
-    //        await DisplayAlert("Bluetooth", "Требуется ручное действие или нет разрешений", "OK");
-    //    else
-    //        await DisplayAlert("Bluetooth", e.Value ? "Включено" : "Выключено", "OK");
-    //}
 
-    
+
+
 
     private async Task InitializeBluetoothSwitchState()
     {
