@@ -85,6 +85,20 @@ namespace Scb_Electronmash
 
         }
 
+
+        private void MainCarousel_CurrentItemChanged(object sender, CurrentItemChangedEventArgs e)
+        {
+            // Пример: показать в label4 текст текущей страницы
+            if (e?.CurrentItem is string text)
+            {
+                label4.Text = text;
+            }
+        }
+
+
+
+
+
     }
 }
 

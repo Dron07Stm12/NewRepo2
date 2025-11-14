@@ -2,32 +2,33 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="Scb_Electronmash.MainPage"
+             Background="#178080"
              Shell.NavBarIsVisible="True"
-             Title="Меню"
+             Title="Меню     ВАРТА 16"
              >
 
     <ScrollView>
         <VerticalStackLayout
-            Padding="30,0"
-            Spacing="25">
-            <Image
+            Padding="5,5"
+            Spacing="5">
+            <!--<Image
                 Source="dotnet_bot.png"
                 HeightRequest="185"
                 Aspect="AspectFit"
-                SemanticProperties.Description="dot net bot in a hovercraft number nine" />
+                SemanticProperties.Description="dot net bot in a hovercraft number nine" />-->
 
             <Border
                Stroke="#0B0101"
                StrokeThickness="2"
                StrokeShape="RoundRectangle 10"
                BackgroundColor="#b3d6bf"
-               Padding="10"
+               Padding="5"
                Margin="5"
-               HeightRequest="180">
+               HeightRequest="200">
 
                 <ScrollView x:Name="scrollView" VerticalOptions="Fill">
                     <Label x:Name="label4"
-                      Text="Empty text to receive data"
+                      Text="receive data"
                       FontAttributes="Bold"    
                       FontSize="14"
                       TextColor="Black"
@@ -41,13 +42,13 @@
             <Grid Margin="2" ColumnDefinitions="*,*,*" ColumnSpacing="10">
 
 
-                <Button
+                <Button Margin="5"
                 x:Name="CounterBtn"
                 Text="Rx" 
                 FontAttributes="Bold"             
-                FontSize="18"
+                FontSize="14"
                 TextColor="White"
-                BackgroundColor="#361861"
+                BackgroundColor="#1E1033"
                 SemanticProperties.Hint="Counts the number of times you click"
                 Clicked="OnCounterClicked"
                 HorizontalOptions="Fill" 
@@ -59,7 +60,7 @@
                         Text="Clear data"
                         FontAttributes="Bold"   
                         TextColor="#01010d" 
-                        BackgroundColor="#70CBCB"
+                        BackgroundColor="#b3d6bf"
                         Clicked="OnClear_Data_Dev"                       
                         Grid.Column="1" />
 
@@ -67,11 +68,12 @@
 
 
 
-                <Button Text="Tx"
+                <Button Margin="5"
+                        Text="Tx"
                         FontAttributes="Bold" 
-                        FontSize="18"
+                        FontSize="14"
                         TextColor="#ffffff"
-                        BackgroundColor="#158715"
+                        BackgroundColor="#082F08"
                         Clicked="OnCounterClicked_Tx"
                         Grid.Column="2"
                   />
@@ -79,6 +81,53 @@
 
 
             </Grid>
+
+
+            <!-- CarouselView: ItemsSource из массива строк и ItemTemplate для визуального представления -->
+            <CarouselView x:Name="MainCarousel"
+              HeightRequest="180"
+              IsSwipeEnabled="True"
+              IndicatorView="indicators"
+              CurrentItemChanged="MainCarousel_CurrentItemChanged"
+              VerticalOptions="Start">
+
+                <!-- Горизонтальная ориентация через ItemsLayout -->
+                <CarouselView.ItemsLayout>
+                    <LinearItemsLayout Orientation="Horizontal" ItemSpacing="10" />
+                </CarouselView.ItemsLayout>
+
+                <!-- Источник элементов: массив строк (по одной строке на "страницу") -->
+                <CarouselView.ItemsSource>
+                    <x:Array Type="{x:Type x:String}">
+                        <x:String>Страница 1: Пункт A</x:String>
+                        <x:String>Страница 2: Пункт B</x:String>
+                        <x:String>Страница 3: Пункт C</x:String>
+                    </x:Array>
+                </CarouselView.ItemsSource>
+
+                <!-- Шаблон для каждой страницы -->
+                <CarouselView.ItemTemplate>
+                    <DataTemplate>
+                        <StackLayout Padding="10" Background="Transparent">
+                            <Label Text="{Binding .}"
+                           TextColor="White"
+                           FontSize="16" />
+                        </StackLayout>
+                    </DataTemplate>
+                </CarouselView.ItemTemplate>
+            </CarouselView>
+
+            <IndicatorView x:Name="indicators"
+               IndicatorColor="LightGray"
+               SelectedIndicatorColor="#361861"
+               HorizontalOptions="Center"
+               Margin="0,6,0,0" />
+
+
+
+
+
+
 
 
         </VerticalStackLayout>
