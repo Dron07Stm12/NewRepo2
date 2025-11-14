@@ -77,26 +77,29 @@
                         Clicked="OnCounterClicked_Tx"
                         Grid.Column="2"
                   />
-                
+
 
 
             </Grid>
 
 
-            <!-- CarouselView: ItemsSource из массива строк и ItemTemplate для визуального представления -->
+            <!-- Замените ваш текущий CarouselView этим блоком -->
             <CarouselView x:Name="MainCarousel"
               HeightRequest="180"
               IsSwipeEnabled="True"
               IndicatorView="indicators"
               CurrentItemChanged="MainCarousel_CurrentItemChanged"
-              VerticalOptions="Start">
+              VerticalOptions="Start"
+              HorizontalOptions="FillAndExpand"
+              PeekAreaInsets="0">
 
-                <!-- Горизонтальная ориентация через ItemsLayout -->
                 <CarouselView.ItemsLayout>
-                    <LinearItemsLayout Orientation="Horizontal" ItemSpacing="10" />
+                    <LinearItemsLayout Orientation="Horizontal"
+                           ItemSpacing="0"
+                           SnapPointsType="MandatorySingle"
+                           SnapPointsAlignment="Center" />
                 </CarouselView.ItemsLayout>
 
-                <!-- Источник элементов: массив строк (по одной строке на "страницу") -->
                 <CarouselView.ItemsSource>
                     <x:Array Type="{x:Type x:String}">
                         <x:String>Страница 1: Пункт A</x:String>
@@ -105,14 +108,11 @@
                     </x:Array>
                 </CarouselView.ItemsSource>
 
-                <!-- Шаблон для каждой страницы -->
                 <CarouselView.ItemTemplate>
                     <DataTemplate>
-                        <StackLayout Padding="10" Background="Transparent">
-                            <Label Text="{Binding .}"
-                           TextColor="White"
-                           FontSize="16" />
-                        </StackLayout>
+                        <Grid Padding="10" HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand">
+                            <Label Text="{Binding .}" TextColor="White" FontSize="16" HorizontalOptions="Center" VerticalOptions="Start" LineBreakMode="WordWrap" />
+                        </Grid>
                     </DataTemplate>
                 </CarouselView.ItemTemplate>
             </CarouselView>
@@ -133,4 +133,4 @@
         </VerticalStackLayout>
     </ScrollView>
 
-</ContentPage>
+ </ContentPage>
