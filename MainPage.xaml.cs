@@ -97,6 +97,30 @@ namespace Scb_Electronmash
 
 
 
+        // андрей начало изменений
+        // Обработчик тапов для "ток шлейфа 1" / "ток шлейфа 2"
+        private async void OnShleyfTapped(object sender, EventArgs e)
+        {
+            if (sender is TapGestureRecognizer tap)
+            {
+                var param = tap.CommandParameter?.ToString() ?? "(no param)";
+                var parts = param.Split('|');
+                var page = parts.Length > 0 ? parts[0] : "?";
+                var id = parts.Length > 1 ? parts[1] : "?";
+
+                // Убедимся, что вызов DisplayAlert в UI-потоке
+                await MainThread.InvokeOnMainThreadAsync(async () =>
+                {
+                    await DisplayAlert("Нажато", $"Страница {page}: {id}", "OK");
+                });
+            }
+        }
+        // андрей конец изменений
+
+
+
+
+
 
 
     }

@@ -4,133 +4,171 @@
              x:Class="Scb_Electronmash.MainPage"
              Background="#178080"
              Shell.NavBarIsVisible="True"
-             Title="Меню     ВАРТА 16"
-             >
-
-    <ScrollView>
-        <VerticalStackLayout
-            Padding="5,5"
-            Spacing="5">
-            <!--<Image
-                Source="dotnet_bot.png"
-                HeightRequest="185"
-                Aspect="AspectFit"
-                SemanticProperties.Description="dot net bot in a hovercraft number nine" />-->
-
-            <Border
-               Stroke="#0B0101"
-               StrokeThickness="2"
-               StrokeShape="RoundRectangle 10"
-               BackgroundColor="#b3d6bf"
-               Padding="5"
-               Margin="5"
-               HeightRequest="200">
-
-                <ScrollView x:Name="scrollView" VerticalOptions="Fill">
-                    <Label x:Name="label4"
-                      Text="receive data"
-                      FontAttributes="Bold"    
-                      FontSize="14"
-                      TextColor="Black"
-                      LineBreakMode="WordWrap"
-                      VerticalTextAlignment="Start"
-                      HorizontalTextAlignment="Start" />
-                </ScrollView>
-
-            </Border>
-
-            <Grid Margin="2" ColumnDefinitions="*,*,*" ColumnSpacing="10">
+             Title="Меню     ВАРТА 16">
 
 
-                <Button Margin="5"
-                x:Name="CounterBtn"
-                Text="Rx" 
-                FontAttributes="Bold"             
-                FontSize="14"
-                TextColor="White"
-                BackgroundColor="#1E1033"
-                SemanticProperties.Hint="Counts the number of times you click"
-                Clicked="OnCounterClicked"
-                HorizontalOptions="Fill" 
-                Grid.Column="0" 
-                />
-
-
-                <Button Margin="5"
-                        Text="Clear data"
-                        FontAttributes="Bold"   
-                        TextColor="#01010d" 
-                        BackgroundColor="#b3d6bf"
-                        Clicked="OnClear_Data_Dev"                       
-                        Grid.Column="1" />
-
-
-
-
-
-                <Button Margin="5"
-                        Text="Tx"
-                        FontAttributes="Bold" 
-                        FontSize="14"
-                        TextColor="#ffffff"
-                        BackgroundColor="#082F08"
-                        Clicked="OnCounterClicked_Tx"
-                        Grid.Column="2"
-                  />
-
-
-
-            </Grid>
-
-
-            <!-- Замените ваш текущий CarouselView этим блоком -->
-            <CarouselView x:Name="MainCarousel"
-              HeightRequest="180"
-              IsSwipeEnabled="True"
-              IndicatorView="indicators"
-              CurrentItemChanged="MainCarousel_CurrentItemChanged"
-              VerticalOptions="Start"
-              HorizontalOptions="FillAndExpand"
-              PeekAreaInsets="0">
-
-                <CarouselView.ItemsLayout>
-                    <LinearItemsLayout Orientation="Horizontal"
-                           ItemSpacing="0"
-                           SnapPointsType="MandatorySingle"
-                           SnapPointsAlignment="Center" />
-                </CarouselView.ItemsLayout>
-
-                <CarouselView.ItemsSource>
-                    <x:Array Type="{x:Type x:String}">
-                        <x:String>Страница 1: Пункт A</x:String>
-                        <x:String>Страница 2: Пункт B</x:String>
-                        <x:String>Страница 3: Пункт C</x:String>
-                    </x:Array>
-                </CarouselView.ItemsSource>
-
-                <CarouselView.ItemTemplate>
-                    <DataTemplate>
-                        <Grid Padding="10" HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand">
-                            <Label Text="{Binding .}" TextColor="White" FontSize="16" HorizontalOptions="Center" VerticalOptions="Start" LineBreakMode="WordWrap" />
-                        </Grid>
-                    </DataTemplate>
-                </CarouselView.ItemTemplate>
-            </CarouselView>
-
-            <IndicatorView x:Name="indicators"
-               IndicatorColor="LightGray"
-               SelectedIndicatorColor="#361861"
-               HorizontalOptions="Center"
-               Margin="0,6,0,0" />
-
-
-
-
-
-
-
-
-        </VerticalStackLayout>
-    </ScrollView>
-
- </ContentPage>
+    <!-- Ваш существующий XAML-код без изменений -->
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <ScrollView Grid.Row="0">
+            <VerticalStackLayout Padding="5,5" Spacing="5">
+                <Border Stroke="#0B0101" StrokeThickness="2" StrokeShape="RoundRectangle 10" BackgroundColor="#b3d6bf" Padding="5" Margin="5" HeightRequest="200">
+                    <ScrollView x:Name="scrollView" VerticalOptions="Fill">
+                        <Label x:Name="label4"
+                               Text="receive data"
+                               FontAttributes="Bold"
+                               FontSize="14"
+                               TextColor="Black"
+                               LineBreakMode="WordWrap"
+                               VerticalTextAlignment="Start"
+                               HorizontalTextAlignment="Start" />
+                    </ScrollView>
+                </Border>
+                <Grid Margin="2" ColumnDefinitions="*,*,*" ColumnSpacing="10">
+                    <Button Margin="5"
+                            x:Name="CounterBtn"
+                            Text="Rx"
+                            FontAttributes="Bold"
+                            FontSize="14"
+                            TextColor="White"
+                            BackgroundColor="#1E1033"
+                            SemanticProperties.Hint="Counts the number of times you click"
+                            Clicked="OnCounterClicked"
+                            HorizontalOptions="Fill"
+                            Grid.Column="0" />
+                    <Button Margin="5"
+                            Text="Clear data"
+                            FontAttributes="Bold"
+                            TextColor="#01010d"
+                            BackgroundColor="#b3d6bf"
+                            Clicked="OnClear_Data_Dev"
+                            Grid.Column="1" />
+                    <Button Margin="5"
+                            Text="Tx"
+                            FontAttributes="Bold"
+                            FontSize="14"
+                            TextColor="#ffffff"
+                            BackgroundColor="#082F08"
+                            Clicked="OnCounterClicked_Tx"
+                            Grid.Column="2" />
+                </Grid>
+                <CarouselView x:Name="MainCarousel"
+                             HeightRequest="180"
+                             IsSwipeEnabled="True"
+                             IndicatorView="indicators"
+                             CurrentItemChanged="MainCarousel_CurrentItemChanged"
+                             VerticalOptions="Start"
+                             HorizontalOptions="Fill"
+                             PeekAreaInsets="0">
+                    <CarouselView.ItemsLayout>
+                        <LinearItemsLayout Orientation="Horizontal"
+                                           ItemSpacing="0"
+                                           SnapPointsType="MandatorySingle"
+                                           SnapPointsAlignment="Center" />
+                    </CarouselView.ItemsLayout>
+                    <CarouselView.ItemsSource>
+                        <x:Array Type="{x:Type x:String}">
+                            <x:String>Страница 1:</x:String>
+                            <x:String>Страница 2:</x:String>
+                            <x:String>Страница 3:</x:String>
+                            <x:String>Страница 4:</x:String>
+                            <x:String>Страница 5:</x:String>
+                            <x:String>Страница 6:</x:String>
+                            <x:String>Страница 7:</x:String>
+                            <x:String>Страница 8:</x:String>
+                            <x:String>Страница 9:</x:String>
+                            <x:String>Страница 10:</x:String>
+                            <x:String>Страница 11:</x:String>
+                            <x:String>Страница 12:</x:String>
+                        </x:Array>
+                    </CarouselView.ItemsSource>
+                    <CarouselView.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Padding="10" HorizontalOptions="Fill" VerticalOptions="Fill">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <StackLayout x:Name="SimpleLabelBlock"
+                                             Grid.Row="0"
+                                             HorizontalOptions="Fill"
+                                             VerticalOptions="Start"
+                                             IsVisible="True"
+                                             Margin="8,0,8,6">
+                                    <Label Text="{Binding .}"
+                                           TextColor="White"
+                                           FontSize="16"
+                                           HorizontalOptions="Start"
+                                           VerticalOptions="Start"
+                                           LineBreakMode="WordWrap" />
+                                    <StackLayout.Triggers>
+                                        <DataTrigger TargetType="StackLayout" Binding="{Binding .}" Value="Страница 4:">
+                                            <Setter Property="IsVisible" Value="False" />
+                                        </DataTrigger>
+                                    </StackLayout.Triggers>
+                                </StackLayout>
+                                <VerticalStackLayout x:Name="Page4Block"
+                                                     Grid.Row="1"
+                                                     IsVisible="False"
+                                                     VerticalOptions="Start"
+                                                     Spacing="4"
+                                                     Margin="8,0,8,0"
+                                                     HorizontalOptions="Start">
+                                    <Label Text="Страница 4 — Ток шлейфов"
+                                           TextColor="Black"
+                                           FontSize="16"
+                                            FontAttributes="Bold"
+                                           HorizontalOptions="Start" />
+                                    <Border Stroke="#0B0101"
+                                            StrokeThickness="1"
+                                            StrokeShape="RoundRectangle 8"
+                                            BackgroundColor="#107f36"
+                                            Padding="8"
+                                            Margin="0,2"
+                                            HorizontalOptions="Start">
+                                        <Border.GestureRecognizers>
+                                            <TapGestureRecognizer Tapped="OnShleyfTapped" CommandParameter="4|tokshelyf1" />
+                                        </Border.GestureRecognizers>
+                                        <Label Text="ток шлейфа 1" TextColor="#01010d" HorizontalOptions="Start"
+                                                FontAttributes="Bold"
+                                               
+                                               />
+                                    </Border>
+                                    <Border Stroke="#0B0101"
+                                            StrokeThickness="1"
+                                            StrokeShape="RoundRectangle 8"
+                                           BackgroundColor="#107f36"
+                                            Padding="8"
+                                            Margin="0,2"
+                                            HorizontalOptions="Start">
+                                        <Border.GestureRecognizers>
+                                            <TapGestureRecognizer Tapped="OnShleyfTapped" CommandParameter="4|tokshelyf2" />
+                                        </Border.GestureRecognizers>
+                                        <Label Text="ток шлейфа 2" TextColor="#01010d" HorizontalOptions="Start" 
+                                                FontAttributes="Bold"
+                                               />
+                                    </Border>
+                                    <VerticalStackLayout.Triggers>
+                                        <DataTrigger TargetType="VerticalStackLayout" Binding="{Binding .}" Value="Страница 4:">
+                                            <Setter Property="IsVisible" Value="True" />
+                                        </DataTrigger>
+                                    </VerticalStackLayout.Triggers>
+                                </VerticalStackLayout>
+                            </Grid>
+                        </DataTemplate>
+                    </CarouselView.ItemTemplate>
+                </CarouselView>
+            </VerticalStackLayout>
+        </ScrollView>
+        <IndicatorView x:Name="indicators"
+                       Grid.Row="1"
+                       IndicatorColor="LightGray"
+                       SelectedIndicatorColor="#361861"
+                       HorizontalOptions="Center"
+                       VerticalOptions="End"
+                       Margin="0,6,0,12" />
+    </Grid>
+</ContentPage>
