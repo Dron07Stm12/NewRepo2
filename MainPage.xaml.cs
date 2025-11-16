@@ -97,6 +97,7 @@ namespace Scb_Electronmash
 
 
 
+
         // андрей начало изменений
         // Обработчик тапов для "ток шлейфа 1" / "ток шлейфа 2"
         private async void OnShleyfTapped(object sender, EventArgs e)
