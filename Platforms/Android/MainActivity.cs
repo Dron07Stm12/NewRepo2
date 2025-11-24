@@ -22,10 +22,18 @@ namespace Scb_Electronmash
 
             if (granted)
             {
-                // Можно работать с Bluetooth
+                try {
+                    // Можно работать с Bluetooth
 #pragma warning disable CS8602 // Разыменование вероятной пустой ссылки.
-                Toast.MakeText(this, "Bluetooth разрешения получены!", ToastLength.Short).Show();
+                    Toast.MakeText(this, "Bluetooth разрешения получены!", ToastLength.Short).Show();
 #pragma warning restore CS8602 // Разыменование вероятной пустой ссылки.
+
+                }
+                catch(Exception ex) { Android.Util.Log.Info("Error", $"MainActivity: {ex.Message}"); }
+                // Можно работать с Bluetooth
+//#pragma warning disable CS8602 // Разыменование вероятной пустой ссылки.
+//                Toast.MakeText(this, "Bluetooth разрешения получены!", ToastLength.Short).Show();
+//#pragma warning restore CS8602 // Разыменование вероятной пустой ссылки.
 
             }
             else

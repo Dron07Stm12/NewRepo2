@@ -184,6 +184,8 @@ public partial class Settings2Page : ContentPage
         // Если OnOffBluetooth возвращает false — скорее всего открылись настройки (Android 13) или нет прав.
         if (!opResult)
         {
+            await DisplayAlert("Bluetooth", "Требуется ручное действие или нет разрешений", "OK");
+
             // Обновим UI по текущему состоянию и покажем сообщение о ручном действии
             bool actualNow = false;
             try { actualNow = await _bluetoothService.IsBluetoothEnabledAsync(); } catch { actualNow = false; }
@@ -198,13 +200,13 @@ public partial class Settings2Page : ContentPage
                 _suppressBluetoothToggle = false;
             });
 
-            await DisplayAlert("Bluetooth", "Требуется ручное действие или нет разрешений", "OK");
+          //  await DisplayAlert("Bluetooth", "Требуется ручное действие или нет разрешений", "OK");
 
             // Фоновый опрос заменён на ожидание события: подпишемся и дождёмся изменения (если произойдёт)
             _ = Task.Run(async () =>
             {
                 const int pollTimeoutSec = 12;
-                var changed = await WaitForBluetoothStateAsync(!actualNow, pollTimeoutSec * 1000);
+                var changed = await WaitForBluetoothStateAsync(!actualNow, pollTimeoutSec * 500);
                 if (changed)
                 {
                     // обновим UI если состояние изменилось

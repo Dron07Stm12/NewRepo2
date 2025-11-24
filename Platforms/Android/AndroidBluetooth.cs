@@ -18,6 +18,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Xamarin.Google.Crypto.Tink.Subtle;
 using static Android.Provider.Contacts.Intents;
 using static Microsoft.Maui.ApplicationModel.Permissions;
 using static System.Net.Mime.MediaTypeNames;
@@ -660,23 +661,64 @@ namespace Scb_Electronmash.Platforms.Android
                             continue;
                         }
 
+                        //извлекает из recvBuf массив байт длиной asciiLen, начиная с позиции start + 1 (то есть сразу после START).
+                        // recvBuf — List<byte> с накопленными байтами.
+                        //Skip(start + 1) — возвращает IEnumerable<byte>, которое при перечислении пропустит первые start+1 элементов(т.е.начнёт с байта сразу после RESP_START).
+                        //Take(asciiLen) — ограничивает последовательность первыми asciiLen элементами(берёт ровно те байты, которые лежат между START и STOP).
+                        //ToArray() — материализует результат перечисления в новый массив byte[] длиной asciiLen.
+                        //Итог: создаётся новый массив asciiBytes, содержащий последовательность байт из recvBuf с индекса start + 1 длиной asciiLen. Это именно часть между START и STOP, и дальше обычно конвертируется в ASCII‑строку.
+                        //byte[] asciiBytes = recvBuf.Skip(start + 1).Take(asciiLen).ToArray(); — получаешь ровно те байты,
+                        //которые лежали между START и STOP: например {'3','0','A','F', '\r','\n'} в виде байтов {0x33,0x30,0x41,0x46,0x0D,0x0A} -лежат коды символов ASCII.
                         byte[] asciiBytes = recvBuf.Skip(start + 1).Take(asciiLen).ToArray();
+
+
+
+                        //Коротко — эта цепочка превращает массив байт между START и STOP в нормализованную ASCII‑строку с HEX‑символами
+                        //System.Text.Encoding.ASCII.GetString(asciiBytes) даёт строку вида "01A3..." — каждый символ строки — ASCII‑символ.
+                        //В смысле протокола: каждый такой символ по линии занимает 1 байт (ASCII‑код), например символ '0' — байт 0x30, 'F' — 0x46.
+                        //в верхнем регистре и без символов перевода строки/пробелов. Пошагово:
+                        //System.Text.Encoding.ASCII.GetString(asciiBytes)
+                        //Преобразует байты в строку, интерпретируя каждый байт как ASCII‑символ. (Не‑ASCII байты будут заменены на '?' в.NET ASCII‑кодировке.)
+                        //.Replace("\r", "").Replace("\n", "")
+                        //Убирает все символы возврата каретки(\r) и перевода строки(\n) из строки(встречаются, если устройство посылает CR/ LF). Удаляются в любых позициях, не только в конце..Trim()
+                        //Удаляет пробельные символы в начале и в конце строки(пробелы, табы и т.д.).Внутренние пробелы не затрагиваются..ToUpperInvariant()
+                        //Приводит все буквенные символы к верхнему регистру в независимой от культуры форме(чтобы 'a'..'f' стали 'A'..'F' для корректного HEX‑парсинга).Пример:
+                        //asciiBytes, соответствующие строке "0a1b\r\n"->после GetString = "0a1b\r\n"->после Replace = "0a1b"->после Trim = "0a1b"->после ToUpperInvariant = "0A1B".
                         string asciiHex = System.Text.Encoding.ASCII.GetString(asciiBytes)
                                                .Replace("\r", "").Replace("\n", "").Trim()
                                                .ToUpperInvariant();
-
+                        // удаляет из recvBuf весь кадр (от начала до STOP включительно),
                         recvBuf.RemoveRange(0, stop + 1);
-
+                        
+                        // проверяем, что длина ASCII‑строки чётная (каждые два символа — один байт)
                         if (asciiHex.Length % 2 != 0)
                         {
                             DataReceived?.Invoke($"RX ERROR: odd hex length -> {asciiHex}");
                             continue;
                         }
-
+                        //Коротко — этот блок берёт ASCII‑HEX строку (asciiHex), по две цифры превращает в байт
+                        //и собирает массив байтов frameBytes. Если парсинг любой пары не удался (некорректный символ/формат),
+                        //исключение ловится в catch, событие об ошибке посылается, и парсер пропускает этот кадр (continue).
                         byte[] frameBytes;
                         try
                         {
+                            //создаёт массив байт длиной asciiHex.Length / 2 (каждые два HEX‑символа — один байт)
                             frameBytes = new byte[asciiHex.Length / 2];
+                            //цикл от 0 до frameBytes.Length - 1
+                            //в каждой итерации берёт две HEX‑цифры из asciiHex (начиная с позиции i*2),
+                            //преобразует их в байт с основанием 16 (шестнадцатеричное) и сохраняет в frameBytes[i].
+                            //по сути в каждом нибле или тетраде будет зашифрован один символ через HEX -цифру и будет как один байт
+                            //Коротко: один HEX‑символ (0..9, A..F) кодирует 4 бита (ниббл). Две такие HEX‑цифры — старший и младший ниббл — собираются в 8 бит = 1 байт.
+
+                            // Пошагово и с примерами
+
+                            //HEX‑символ '2' означает значение 2(бинарно 0010).
+                            //HEX‑символ '4' означает значение 4(0100).
+                            //Объединяем: старший ниббл << 4 = 2 << 4 = 0x20(0010 0000), затем OR с младшим нибблом: 0x20 | 0x04 = 0x24(0010 0100).То есть пара "24" → байт 0x24(36 dec).
+                            //после парсинга ASCII→байты поле length (frameBytes[lengthIndex]) — это уже один байт со значением от 0 до 255 (0x00..0xFF).
+                            //Ранее он был в виде двух ASCII‑символов (например 'F''F' — два байта 0x46 0x46), но после Convert.ToByte("FF",16) это становится одним байтом 0xFF.
+                            //Перед этим у тебя есть проверка на чётную длину asciiHex, поэтому Substring(i*2,2) не выйдет за границы.
+                            //Convert.ToByte(...) бросит исключение при некорректных HEX‑символах (FormatException) — у тебя это обрабатывается try/catch.
                             for (int i = 0; i < frameBytes.Length; i++)
                                 frameBytes[i] = Convert.ToByte(asciiHex.Substring(i * 2, 2), 16);
                         }
@@ -686,14 +728,19 @@ namespace Scb_Electronmash.Platforms.Android
                             continue;
                         }
 
-                        bool chkOk = false;
-                        if (frameBytes.Length >= 1)
+                        bool chkOk = false;//по умолчанию метка «контрольная сумма не прошла».
+                        if (frameBytes.Length >= 1)//выполняем проверку только если в массиве есть хотя бы один байт (иначе нечего проверять).
                         {
                             int sum = 0;
+                            //цикл суммирует байты от 0 до frameBytes.Length - 2 (все байты, кроме последнего)
+                            //последний байт считается контрольной суммой.
+                            // Последний байт массива рассматривается как присланная контрольная сумма,
+                            // поэтому мы суммируем только полезные байты, а затем сравниваем младший байт суммы с этим последним байтом.
                             for (int i = 0; i < frameBytes.Length - 1; i++) sum += frameBytes[i];
+                            //Затем вычисляется сумма по модулю 256 (sum & 0xFF) и сравнивается с последним байтом.
                             chkOk = ((byte)(sum & 0xFF)) == frameBytes[frameBytes.Length - 1];
                         }
-
+                        //превращает массив байт в строку с шестнадцатеричным представлением без дефисов.
                         string fullHex = BitConverter.ToString(frameBytes).Replace("-", "");
                         if (chkOk)
                         {
@@ -704,7 +751,31 @@ namespace Scb_Electronmash.Platforms.Android
                         }
                         else
                         {
-                            DataReceived?.Invoke($"RX CHK FAIL full={fullHex}");
+                            // 1. Берём длину из frameBytes[7]
+                            int length = frameBytes[7];
+
+                            // 2. Создаём массив для данных
+                           // byte[] data = new byte[length];
+                            // создаём и заполняем массив payload безопасно
+                            byte[] data = length == 0 ? Array.Empty<byte>() : new byte[length];
+
+                            // 3. Копируем данные начиная с индекса 2
+                            Array.Copy(frameBytes, 8, data, 0, length);
+
+                            // Преобразуем массив байт в строку десятичных чисел
+                          //  string decimalString = string.Join("", data.Select(b => b.ToString("D")));
+                            Func<byte, string> toDecimal = delegate (byte b) { return b.ToString("D"); };
+                            string decimalString = string.Join("", data.Select(toDecimal));
+                            // Вызов события с десятичным выводом
+                            DataReceived?.Invoke($"RX -> {fullHex} ток = {decimalString}mA");
+
+
+
+                            //  DataReceived?.Invoke($"RX CHK FAIL-> {fullHex} ток = {BitConverter.ToString(data).Replace("-", "")}mA");
+
+
+                            //  DataReceived?.Invoke($"RX CHK FAIL-> {fullHex}");
+
                         }
                     } // parse loop
                 } // outer loop
@@ -758,7 +829,70 @@ namespace Scb_Electronmash.Platforms.Android
 
             try
             {
-                string asciiHex = "01010000240501012D"; // команда в ASCII HEX формате
+                string asciiHex = "0101000021000080A3"; // команда в ASCII HEX формате //0101000021000080A3 //01010000240501012D
+                //Эти байты будут вставлены в начало и конец буфера как «сырые» (не ASCII). PIC ISR смотрит именно на такие «raw» старт/стоп.
+                byte rawStart = 0x01; // стартовый байт
+                byte rawStop = 0x05;  // стоповый байт
+                // Преобразуем ASCII строку в байты
+                // Преобразует строку в массив байт ASCII: каждый символ строки → один байт с кодом ASCII (например '0' -> 0x30).
+                var asciiBytes = System.Text.Encoding.ASCII.GetBytes(asciiHex);
+
+                // Формируем итоговый массив байт: rawStart + asciiBytes + rawStop - посылки длиной: 1 байт (start) + N ascii байтов + 1 байт (stop)
+                // Создаём конечный буфер 
+                byte[] toSend = new byte[1 + asciiBytes.Length + 1];
+                // Записываем стартовый «сырой» байт в позицию 0.
+                toSend[0] = rawStart;
+                // Копируем ASCII байты в середину буфера (начиная с позиции 1).
+                // Копируем ascii-байты в toSend, начиная с позиции 1 (после rawStart).
+                // Array.Copy безопасен: если asciiBytes.Length соответствует, нижняя граница индексов ok.
+                //  Важный момент: порядок байтов будет: [0] = 0x01, [1] = first ASCII char(0x30), [2] = next ASCII char(0x31), ... — это именно то, что нужно PIC
+                Array.Copy(asciiBytes, 0, toSend, 1, asciiBytes.Length);
+                // Записываем стоповый «сырой» байт в последнюю позицию.
+                // Теперь буфер полностью сформирован и готов к отправке.
+                toSend[toSend.Length - 1] = rawStop;
+                //Получаем поток записи из сокета.
+                var outStream = bluetoothSocket.OutputStream;
+                // Пишем весь буфер в поток.
+                // Асинхронная запись: пишет весь буфер в поток, не блокируя текущий поток (если поток поддерживает асинхронность).
+                await outStream.WriteAsync(toSend, 0, toSend.Length);
+                // Гарантирует, что все буфера потоков будут сброшены и данные реально отправлены (в пределах стека I/O).
+                //Для некоторых реализаций Flush не обязателен, но безопасно его делать
+                //Flush заставляет сбросить все данные из буферов «выше» в стек ввода-вывода и попытаться передать их дальше к следующему уровню (обычно в драйвер/сокет).
+                //Если вы используете обёртки/ буферизаторы(BufferedStream, StreamWriter и т.п.), то Write может только положить данные в этот буфер; Flush гарантирует, что они действительно уйдут в нижележащий поток.
+                //Flush не даёт гарантии, что данные дошли до удалённого устройства — он только продвигает данные вниз по стеку.Физическая доставка может быть прервана и не подтверждена — для подтверждения нужен протокол уровня приложения.
+                await outStream.FlushAsync();
+
+                // не обязательно логгировать через событие — пока пропускаем
+            }
+            catch (Exception ex)
+            {
+                // логируем или пробрасываем — пока покажем в DataReceived или пробросим
+                // MainThread.BeginInvokeOnMainThread(() => DataReceived?.Invoke("Send error: " + ex.Message));
+                throw; // или просто return, если не хотите бросать
+            }
+        }
+
+
+
+        public async Task TransmitterData(string s)
+        {
+
+            if (string.IsNullOrWhiteSpace(s))
+                throw new ArgumentException("asciiHex is required", nameof(s));
+
+
+
+
+            // Проверяем, что сокет и его поток готовы к записи
+            if (bluetoothSocket == null || bluetoothSocket.OutputStream == null)
+                throw new InvalidOperationException("Bluetooth socket not ready");
+
+            try
+            {
+
+
+
+                string asciiHex = s; // команда в ASCII HEX формате //0101000021000080A3 //01010000240501012D
                 //Эти байты будут вставлены в начало и конец буфера как «сырые» (не ASCII). PIC ISR смотрит именно на такие «raw» старт/стоп.
                 byte rawStart = 0x01; // стартовый байт
                 byte rawStop = 0x05;  // стоповый байт
@@ -838,7 +972,28 @@ namespace Scb_Electronmash.Platforms.Android
 
 
 
+/*int length = frameBytes[7];
 
+// первый байт payload всегда в позиции 8
+int dataStart = 8;
+
+// ожидаемое количество байт для payload (конец диапазона — exclusive)
+int expectedDataEndExclusive = dataStart + length; // если length==0, expectedDataEndExclusive==dataStart
+
+// защита: проверяем, что пришло достаточно байт только для payload
+if (frameBytes.Length < expectedDataEndExclusive)
+{
+    DataReceived?.Invoke($"RX ERROR: incomplete frame got={frameBytes.Length} need={expectedDataEndExclusive} (length={length})");
+    continue;
+}
+
+// создаём и заполняем массив payload безопасно
+byte[] data = length == 0 ? Array.Empty<byte>() : new byte[length];
+if (length > 0)
+    Array.Copy(frameBytes, dataStart, data, 0, length);
+
+// логируем payload (контрольная сумма не используется)
+DataReceived?.Invoke($"RX CHK FAIL-> {fullHex} ток = {BitConverter.ToString(data).Replace(\"-\",\"\")}");*/
 
 
 

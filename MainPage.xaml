@@ -2,9 +2,11 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="Scb_Electronmash.MainPage"
-             Background="#178080"
+             Background="#0A5F74"
              Shell.NavBarIsVisible="True"
-             Title="Меню     ВАРТА 16">
+             Title="Меню     ВАРТА 16"
+            
+             >
 
 
     <!-- Ваш существующий XAML-код без изменений -->
@@ -12,7 +14,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
-        </Grid.RowDefinitions>
+            </Grid.RowDefinitions>
         <ScrollView Grid.Row="0">
             <VerticalStackLayout Padding="5,5" Spacing="5">
                 <Border Stroke="#0B0101" StrokeThickness="2" StrokeShape="RoundRectangle 10" BackgroundColor="#b3d6bf" Padding="5" Margin="5" HeightRequest="200">
@@ -20,7 +22,7 @@
                         <Label x:Name="label4"
                                Text="receive data"
                                FontAttributes="Bold"
-                               FontSize="14"
+                               FontSize="16"
                                TextColor="Black"
                                LineBreakMode="WordWrap"
                                VerticalTextAlignment="Start"
@@ -56,7 +58,7 @@
                             Grid.Column="2" />
                 </Grid>
                 <CarouselView x:Name="MainCarousel"
-                             HeightRequest="180"
+                             HeightRequest="360"
                              IsSwipeEnabled="True"
                              IndicatorView="indicators"
                              CurrentItemChanged="MainCarousel_CurrentItemChanged"
@@ -110,47 +112,160 @@
                                         </DataTrigger>
                                     </StackLayout.Triggers>
                                 </StackLayout>
+                                <!-- Замените ваш текущий VerticalStackLayout x:Name="Page4Block" на этот блок -->
                                 <VerticalStackLayout x:Name="Page4Block"
-                                                     Grid.Row="1"
-                                                     IsVisible="False"
-                                                     VerticalOptions="Start"
-                                                     Spacing="4"
-                                                     Margin="8,0,8,0"
-                                                     HorizontalOptions="Start">
+                                     Grid.Row="1"
+                                     IsVisible="False"
+                                     VerticalOptions="Start"
+                                     Spacing="6"
+                                     Margin="8,0,8,0"
+                                     HorizontalOptions="Start">
                                     <Label Text="Страница 4 — Ток шлейфов"
-                                           TextColor="Black"
-                                           FontSize="16"
-                                            FontAttributes="Bold"
-                                           HorizontalOptions="Start" />
-                                    <Border Stroke="#0B0101"
-                                            StrokeThickness="1"
-                                            StrokeShape="RoundRectangle 8"
-                                            BackgroundColor="#107f36"
-                                            Padding="8"
-                                            Margin="0,2"
-                                            HorizontalOptions="Start">
-                                        <Border.GestureRecognizers>
-                                            <TapGestureRecognizer Tapped="OnShleyfTapped" CommandParameter="4|tokshelyf1" />
-                                        </Border.GestureRecognizers>
-                                        <Label Text="ток шлейфа 1" TextColor="#01010d" HorizontalOptions="Start"
-                                                FontAttributes="Bold"
-                                               
-                                               />
-                                    </Border>
-                                    <Border Stroke="#0B0101"
-                                            StrokeThickness="1"
-                                            StrokeShape="RoundRectangle 8"
-                                           BackgroundColor="#107f36"
-                                            Padding="8"
-                                            Margin="0,2"
-                                            HorizontalOptions="Start">
-                                        <Border.GestureRecognizers>
-                                            <TapGestureRecognizer Tapped="OnShleyfTapped" CommandParameter="4|tokshelyf2" />
-                                        </Border.GestureRecognizers>
-                                        <Label Text="ток шлейфа 2" TextColor="#01010d" HorizontalOptions="Start" 
-                                                FontAttributes="Bold"
-                                               />
-                                    </Border>
+                                       TextColor="Black"
+                                       FontSize="16"
+                                       FontAttributes="Bold"
+                                       HorizontalOptions="Start" />
+
+                                    <Grid ColumnDefinitions="*,*,*,*"
+                                      RowDefinitions="Auto,Auto,Auto,Auto"
+                                      ColumnSpacing="2"
+                                      RowSpacing="8"
+                                      HorizontalOptions="Fill">
+                                        <!-- 16 кнопок: ток шлейфа 1..16 -->
+                                        <!-- Ряд 0 -->
+                                        <Border Grid.Row="0" Grid.Column="0" Stroke="#0B0101" StrokeThickness="1" StrokeShape="RoundRectangle 8"
+                BackgroundColor="#107f36" Padding="4" Margin="0" HeightRequest="44">
+                                            <Border.GestureRecognizers>
+                                                <TapGestureRecognizer Tapped="OnShleyfTapped" CommandParameter="4|tokshelyf1" />
+                                            </Border.GestureRecognizers>
+                                            <Label Text="ток шлейфа 1" HorizontalOptions="Center" VerticalOptions="Center" InputTransparent="True" TextColor="#000" FontAttributes="Bold" />
+                                        </Border>
+
+                                        <Border Grid.Row="0" Grid.Column="1" Stroke="#0B0101" StrokeThickness="1" StrokeShape="RoundRectangle 8"
+                BackgroundColor="#107f36" Padding="4" Margin="0" HeightRequest="44">
+                                            <Border.GestureRecognizers>
+                                                <TapGestureRecognizer Tapped="OnShleyfTapped" CommandParameter="4|tokshelyf2" />
+                                            </Border.GestureRecognizers>
+                                            <Label Text="ток шлейфа 2" HorizontalOptions="Center" VerticalOptions="Center" InputTransparent="True" TextColor="#000" FontAttributes="Bold" />
+                                        </Border>
+
+                                        <Border Grid.Row="0" Grid.Column="2" Stroke="#0B0101" StrokeThickness="1" StrokeShape="RoundRectangle 8"
+                BackgroundColor="#107f36" Padding="4" Margin="0" HeightRequest="44">
+                                            <Border.GestureRecognizers>
+                                                <TapGestureRecognizer Tapped="OnShleyfTapped" CommandParameter="4|tokshelyf3" />
+                                            </Border.GestureRecognizers>
+                                            <Label Text="ток шлейфа 3" HorizontalOptions="Center" VerticalOptions="Center" InputTransparent="True" TextColor="#000" FontAttributes="Bold" />
+                                        </Border>
+
+                                        <Border Grid.Row="0" Grid.Column="3" Stroke="#0B0101" StrokeThickness="1" StrokeShape="RoundRectangle 8"
+                BackgroundColor="#107f36" Padding="4" Margin="0" HeightRequest="44">
+                                            <Border.GestureRecognizers>
+                                                <TapGestureRecognizer Tapped="OnShleyfTapped" CommandParameter="4|tokshelyf4" />
+                                            </Border.GestureRecognizers>
+                                            <Label Text="ток шлейфа 4" HorizontalOptions="Center" VerticalOptions="Center" InputTransparent="True" TextColor="#000" FontAttributes="Bold" />
+                                        </Border>
+
+                                        <!-- Ряд 1 -->
+                                        <Border Grid.Row="1" Grid.Column="0" Stroke="#0B0101" StrokeThickness="1" StrokeShape="RoundRectangle 8"
+                BackgroundColor="#107f36" Padding="4" Margin="0" HeightRequest="44">
+                                            <Border.GestureRecognizers>
+                                                <TapGestureRecognizer Tapped="OnShleyfTapped" CommandParameter="4|tokshelyf5" />
+                                            </Border.GestureRecognizers>
+                                            <Label Text="ток шлейфа 5" HorizontalOptions="Center" VerticalOptions="Center" InputTransparent="True" TextColor="#000" FontAttributes="Bold" />
+                                        </Border>
+
+                                        <Border Grid.Row="1" Grid.Column="1" Stroke="#0B0101" StrokeThickness="1" StrokeShape="RoundRectangle 8"
+                BackgroundColor="#107f36" Padding="4" Margin="0" HeightRequest="44">
+                                            <Border.GestureRecognizers>
+                                                <TapGestureRecognizer Tapped="OnShleyfTapped" CommandParameter="4|tokshelyf6" />
+                                            </Border.GestureRecognizers>
+                                            <Label Text="ток шлейфа 6" HorizontalOptions="Center" VerticalOptions="Center" InputTransparent="True" TextColor="#000" FontAttributes="Bold" />
+                                        </Border>
+
+                                        <Border Grid.Row="1" Grid.Column="2" Stroke="#0B0101" StrokeThickness="1" StrokeShape="RoundRectangle 8"
+                BackgroundColor="#107f36" Padding="4" Margin="0" HeightRequest="44">
+                                            <Border.GestureRecognizers>
+                                                <TapGestureRecognizer Tapped="OnShleyfTapped" CommandParameter="4|tokshelyf7" />
+                                            </Border.GestureRecognizers>
+                                            <Label Text="ток шлейфа 7" HorizontalOptions="Center" VerticalOptions="Center" InputTransparent="True" TextColor="#000" FontAttributes="Bold" />
+                                        </Border>
+
+                                        <Border Grid.Row="1" Grid.Column="3" Stroke="#0B0101" StrokeThickness="1" StrokeShape="RoundRectangle 8"
+                BackgroundColor="#107f36" Padding="4" Margin="0" HeightRequest="44">
+                                            <Border.GestureRecognizers>
+                                                <TapGestureRecognizer Tapped="OnShleyfTapped" CommandParameter="4|tokshelyf8" />
+                                            </Border.GestureRecognizers>
+                                            <Label Text="ток шлейфа 8" HorizontalOptions="Center" VerticalOptions="Center" InputTransparent="True" TextColor="#000" FontAttributes="Bold" />
+                                        </Border>
+
+                                        <!-- Ряд 2 -->
+                                        <Border Grid.Row="2" Grid.Column="0" Stroke="#0B0101" StrokeThickness="1" StrokeShape="RoundRectangle 8"
+                BackgroundColor="#107f36" Padding="4" Margin="0" HeightRequest="44">
+                                            <Border.GestureRecognizers>
+                                                <TapGestureRecognizer Tapped="OnShleyfTapped" CommandParameter="4|tokshelyf9" />
+                                            </Border.GestureRecognizers>
+                                            <Label Text="ток шлейфа 9" HorizontalOptions="Center" VerticalOptions="Center" InputTransparent="True" TextColor="#000" FontAttributes="Bold" />
+                                        </Border>
+
+                                        <Border Grid.Row="2" Grid.Column="1" Stroke="#0B0101" StrokeThickness="1" StrokeShape="RoundRectangle 8"
+                BackgroundColor="#107f36" Padding="4" Margin="0" HeightRequest="44">
+                                            <Border.GestureRecognizers>
+                                                <TapGestureRecognizer Tapped="OnShleyfTapped" CommandParameter="4|tokshelyf10" />
+                                            </Border.GestureRecognizers>
+                                            <Label Text="ток шлейфа 10" HorizontalOptions="Center" VerticalOptions="Center" InputTransparent="True" TextColor="#000" FontAttributes="Bold" />
+                                        </Border>
+
+                                        <Border Grid.Row="2" Grid.Column="2" Stroke="#0B0101" StrokeThickness="1" StrokeShape="RoundRectangle 8"
+                BackgroundColor="#107f36" Padding="4" Margin="0" HeightRequest="44">
+                                            <Border.GestureRecognizers>
+                                                <TapGestureRecognizer Tapped="OnShleyfTapped" CommandParameter="4|tokshelyf11" />
+                                            </Border.GestureRecognizers>
+                                            <Label Text="ток шлейфа 11" HorizontalOptions="Center" VerticalOptions="Center" InputTransparent="True" TextColor="#000" FontAttributes="Bold" />
+                                        </Border>
+
+                                        <Border Grid.Row="2" Grid.Column="3" Stroke="#0B0101" StrokeThickness="1" StrokeShape="RoundRectangle 8"
+                BackgroundColor="#107f36" Padding="4" Margin="0" HeightRequest="44">
+                                            <Border.GestureRecognizers>
+                                                <TapGestureRecognizer Tapped="OnShleyfTapped" CommandParameter="4|tokshelyf12" />
+                                            </Border.GestureRecognizers>
+                                            <Label Text="ток шлейфа 12" HorizontalOptions="Center" VerticalOptions="Center" InputTransparent="True" TextColor="#000" FontAttributes="Bold" />
+                                        </Border>
+
+                                        <!-- Ряд 3 -->
+                                        <Border Grid.Row="3" Grid.Column="0" Stroke="#0B0101" StrokeThickness="1" StrokeShape="RoundRectangle 8"
+                BackgroundColor="#107f36" Padding="4" Margin="0" HeightRequest="44">
+                                            <Border.GestureRecognizers>
+                                                <TapGestureRecognizer Tapped="OnShleyfTapped" CommandParameter="4|tokshelyf13" />
+                                            </Border.GestureRecognizers>
+                                            <Label Text="ток шлейфа 13" HorizontalOptions="Center" VerticalOptions="Center" InputTransparent="True" TextColor="#000" FontAttributes="Bold" />
+                                        </Border>
+
+                                        <Border Grid.Row="3" Grid.Column="1" Stroke="#0B0101" StrokeThickness="1" StrokeShape="RoundRectangle 8"
+                BackgroundColor="#107f36" Padding="4" Margin="0" HeightRequest="44">
+                                            <Border.GestureRecognizers>
+                                                <TapGestureRecognizer Tapped="OnShleyfTapped" CommandParameter="4|tokshelyf14" />
+                                            </Border.GestureRecognizers>
+                                            <Label Text="ток шлейфа 14" HorizontalOptions="Center" VerticalOptions="Center" InputTransparent="True" TextColor="#000" FontAttributes="Bold" />
+                                        </Border>
+
+                                        <Border Grid.Row="3" Grid.Column="2" Stroke="#0B0101" StrokeThickness="1" StrokeShape="RoundRectangle 8"
+                BackgroundColor="#107f36" Padding="4" Margin="0" HeightRequest="44">
+                                            <Border.GestureRecognizers>
+                                                <TapGestureRecognizer Tapped="OnShleyfTapped" CommandParameter="4|tokshelyf15" />
+                                            </Border.GestureRecognizers>
+                                            <Label Text="ток шлейфа 15" HorizontalOptions="Center" VerticalOptions="Center" InputTransparent="True" TextColor="#000" FontAttributes="Bold" />
+                                        </Border>
+
+                                        <Border Grid.Row="3" Grid.Column="3" Stroke="#0B0101" StrokeThickness="1" StrokeShape="RoundRectangle 8"
+                BackgroundColor="#107f36" Padding="4" Margin="0" HeightRequest="44">
+                                            <Border.GestureRecognizers>
+                                                <TapGestureRecognizer Tapped="OnShleyfTapped" CommandParameter="4|tokshelyf16" />
+                                            </Border.GestureRecognizers>
+                                            <Label Text="ток шлейфа 16" HorizontalOptions="Center" VerticalOptions="Center" InputTransparent="True" TextColor="#000" FontAttributes="Bold" />
+                                        </Border>
+                                    </Grid>
+
+                                    <!-- показывать Page4Block только для Страница 4 (ваш триггер оставьте как есть) -->
                                     <VerticalStackLayout.Triggers>
                                         <DataTrigger TargetType="VerticalStackLayout" Binding="{Binding .}" Value="Страница 4:">
                                             <Setter Property="IsVisible" Value="True" />

@@ -2,6 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="Scb_Electronmash.Settings2Page"
+             BackgroundColor="#0A5F74"
              Title="Настройки">
     <VerticalStackLayout>
         <Grid ColumnDefinitions="*,Auto"
@@ -36,7 +37,7 @@
                     Grid.Row="1"
                     Grid.Column="1"
                     ThumbColor="White"
-                    OnColor="#6200EE"
+                    OnColor="Green"
                     Toggled="OnScanToggled"/>
         </Grid>
 
@@ -81,8 +82,8 @@
                         </Grid.ColumnDefinitions>
 
                         <StackLayout Orientation="Vertical">
-                            <Label Text="{Binding Name}" FontSize="16" />
-                            <Label Text="{Binding Address}" FontSize="12" TextColor="DarkGreen"/>
+                            <Label Text="{Binding Name}" FontSize="16" TextColor="#a0da0a" />
+                            <Label Text="{Binding Address}" FontSize="12"  FontAttributes="Bold"  TextColor="Black"/>
                         </StackLayout>
 
                         <!-- Добавлен минимальный TapGestureRecognizer -->
@@ -98,7 +99,7 @@
                 </DataTemplate>
             </CollectionView.ItemTemplate>
             <CollectionView.EmptyView>
-                <Label Text="Устройства не найдены" FontSize="16" HorizontalOptions="Center" VerticalOptions="Center" TextColor="Blue"/>
+                <Label Text="Устройства не найдены" FontSize="16" HorizontalOptions="Center" VerticalOptions="Center" TextColor="Black"   FontAttributes="Bold"  />
             </CollectionView.EmptyView>
         </CollectionView>
 

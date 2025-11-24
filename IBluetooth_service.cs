@@ -55,5 +55,8 @@ namespace Scb_Electronmash
         // задача по передаче данных
         Task TransmitterData();
 
+        // перегрузка метода по передаче данных с парамет
+        Task TransmitterData(string asciiHex);
+
     }
 }
