@@ -107,12 +107,83 @@
                                            VerticalOptions="Start"
                                            LineBreakMode="WordWrap" />
                                     <StackLayout.Triggers>
+
+                                        <!-- скрываем общий заголовок на странице 1 -->
+                                        <DataTrigger TargetType="StackLayout" Binding="{Binding .}" Value="Страница 1:">
+                                            <Setter Property="IsVisible" Value="False" />
+                                        </DataTrigger>
+
+
+
+
                                         <DataTrigger TargetType="StackLayout" Binding="{Binding .}" Value="Страница 4:">
                                             <Setter Property="IsVisible" Value="False" />
                                         </DataTrigger>
                                     </StackLayout.Triggers>
                                 </StackLayout>
-                                <!-- Замените ваш текущий VerticalStackLayout x:Name="Page4Block" на этот блок -->
+
+
+                                <!-- Кнопка, видимая только на "Страница 1:" -->
+                                <!-- Page1Block: локальный заголовок + одна плитка (стиль как у Page4) -->
+                                <VerticalStackLayout x:Name="Page1Block"
+                                                     Grid.Row="1"
+                                                     IsVisible="False"
+                                                     VerticalOptions="Start"
+                                                     Spacing="6"
+                                                     Margin="8,0,8,0"
+                                                     HorizontalOptions="Start">
+                                    <Label Text="Страница 1 — ODE_Manufacturer_Device_Name"
+                                           TextColor="Black"
+                                           FontSize="16"
+                                           FontAttributes="Bold"
+                                           HorizontalOptions="Start" />
+
+                                    <Grid ColumnDefinitions="*" RowDefinitions="Auto" ColumnSpacing="2" RowSpacing="8" HorizontalOptions="Fill">
+                                        <Border Grid.Row="0" Grid.Column="0"
+                                                Stroke="#0B0101"
+                                                StrokeThickness="1"
+                                                StrokeShape="RoundRectangle 8"
+                                                BackgroundColor="#107f36"
+                                                Padding="6"
+                                                Margin="0"
+                                                HeightRequest="48"
+                                                HorizontalOptions="Start">
+                                            <Border.GestureRecognizers>
+                                                <!-- можно использовать OnShleyfTapped или OnPage1Tapped -->
+                                                <TapGestureRecognizer Tapped="OnShleyfTapped" CommandParameter="1|Device_Name" />
+                                            </Border.GestureRecognizers>
+
+                                            <Label Text="Device_Name"
+                                                   HorizontalOptions="Center"
+                                                   VerticalOptions="Center"
+                                                   InputTransparent="True"
+                                                   TextColor="#000"
+                                                   FontAttributes="Bold"
+                                                   LineBreakMode="WordWrap"
+                                                   HorizontalTextAlignment="Center"
+                                                   VerticalTextAlignment="Center" />
+                                        </Border>
+                                    </Grid>
+
+                                    <VerticalStackLayout.Triggers>
+                                        <DataTrigger TargetType="VerticalStackLayout" Binding="{Binding .}" Value="Страница 1:">
+                                            <Setter Property="IsVisible" Value="True" />
+                                        </DataTrigger>
+                                    </VerticalStackLayout.Triggers>
+                                </VerticalStackLayout>
+
+
+
+
+
+
+
+
+
+
+
+
+                                <!--  текущий VerticalStackLayout x:Name="Page4Block" на этот блок -->
                                 <VerticalStackLayout x:Name="Page4Block"
                                      Grid.Row="1"
                                      IsVisible="False"
@@ -134,7 +205,7 @@
                                         <!-- 16 кнопок: ток шлейфа 1..16 -->
                                         <!-- Ряд 0 -->
                                         <Border Grid.Row="0" Grid.Column="0" Stroke="#0B0101" StrokeThickness="1" StrokeShape="RoundRectangle 8"
-                BackgroundColor="#107f36" Padding="4" Margin="0" HeightRequest="44">
+                                         BackgroundColor="#107f36" Padding="4" Margin="0" HeightRequest="44">
                                             <Border.GestureRecognizers>
                                                 <TapGestureRecognizer Tapped="OnShleyfTapped" CommandParameter="4|tokshelyf1" />
                                             </Border.GestureRecognizers>

@@ -3,14 +3,17 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="Scb_Electronmash.Settings2Page"
              BackgroundColor="#0A5F74"
-             Title="Настройки">
+             Title="Настройки"
+             
+             >
     <VerticalStackLayout>
         <Grid ColumnDefinitions="*,Auto"
               RowDefinitions="Auto,Auto"
               Padding="0,10,25,0">
             <!-- Первая строка: Bluetooth -->
             <Label Text="Bluetooth" 
-                   FontSize="18"
+                   FontSize="20"
+                   TextColor="#6a056a"
                    FontAttributes="Bold"
                    VerticalOptions="Center"
                    Grid.Row="0"
@@ -26,7 +29,8 @@
 
             <!-- Вторая строка: Scan -->
             <Label Text="Scan" 
-                   FontSize="18"
+                   FontSize="20"
+                   TextColor="#6a056a"
                    FontAttributes="Bold"
                    VerticalOptions="Center"
                    Grid.Row="1"

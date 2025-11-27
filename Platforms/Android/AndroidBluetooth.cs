@@ -755,26 +755,43 @@ namespace Scb_Electronmash.Platforms.Android
                             int length = frameBytes[7];
 
                             // 2. Создаём массив для данных
-                           // byte[] data = new byte[length];
-                            // создаём и заполняем массив payload безопасно
-                            byte[] data = length == 0 ? Array.Empty<byte>() : new byte[length];
 
-                            // 3. Копируем данные начиная с индекса 2
+                            // создаём и заполняем массив под данные
+                            byte[] data = length == 0 ? Array.Empty<byte>() : new byte[length];
+                            // создаём и заполняем массив под индекс
+                            byte[] index =  new byte[4];
+                        
+                            // создаём и заполняем массив под субиндекс
+                            byte subindex = 0;
+
+                            // 3. Копируем данные начиная с индекса 8
                             Array.Copy(frameBytes, 8, data, 0, length);
 
+                            // 3. Копируем данные начиная с индекса 8
+                            Array.Copy(frameBytes, 2, index, 0, 4);
+                         //   string indexlString = string.Join("", index.Select(b => b.ToString("D")));
+                            string indexlString = BitConverter.ToString(index).Replace("-", ""); // пример: "00030139"
+                                                                                                 //
+
+                            // 4. Копируем субиндекс
+                            subindex = frameBytes[6];
+                            string subindexString = subindex.ToString("D");
+
+
+                            //  string text = System.Text.Encoding.ASCII.GetString(data).Trim('\0').Trim();
                             // Преобразуем массив байт в строку десятичных чисел
-                          //  string decimalString = string.Join("", data.Select(b => b.ToString("D")));
+                            //  string decimalString = string.Join("", data.Select(b => b.ToString("D")));
                             Func<byte, string> toDecimal = delegate (byte b) { return b.ToString("D"); };
                             string decimalString = string.Join("", data.Select(toDecimal));
                             // Вызов события с десятичным выводом
-                            DataReceived?.Invoke($"RX -> {fullHex} ток = {decimalString}mA");
+                            DataReceived?.Invoke($"RX -> {fullHex} индекс:{indexlString}. субиндекс:{subindexString}. Ток = {decimalString}mA" );
 
 
 
                             //  DataReceived?.Invoke($"RX CHK FAIL-> {fullHex} ток = {BitConverter.ToString(data).Replace("-", "")}mA");
 
 
-                            //  DataReceived?.Invoke($"RX CHK FAIL-> {fullHex}");
+                            //  DataReceived?.Invoke($"RX CHK FAIL-> {fullHex} length:{text}");
 
                         }
                     } // parse loop
@@ -1102,3 +1119,54 @@ DataReceived?.Invoke($"RX CHK FAIL-> {fullHex} ток = {BitConverter.ToString(d
 
 
 
+//// 1. Берём длину из frameBytes[7]
+//int length = frameBytes[7];
+
+//// 2. Создаём массив для данных
+
+//// создаём и заполняем массив payload безопасно
+//byte[] data = length == 0 ? Array.Empty<byte>() : new byte[length];
+
+//// 3. Копируем данные начиная с индекса 8
+//Array.Copy(frameBytes, 8, data, 0, length);
+
+//// Преобразуем массив байт в строку десятичных чисел
+////  string decimalString = string.Join("", data.Select(b => b.ToString("D")));
+//Func<byte, string> toDecimal = delegate (byte b) { return b.ToString("D"); };
+////   string decimalString = string.Join("", data.Select(toDecimal));
+//// Вызов события с десятичным выводом
+////    DataReceived?.Invoke($"RX -> {fullHex} ток = {decimalString}mA");
+
+
+
+////  DataReceived?.Invoke($"RX CHK FAIL-> {fullHex} ток = {BitConverter.ToString(data).Replace("-", "")}mA");
+
+
+//DataReceived?.Invoke($"RX CHK FAIL-> {fullHex} length:{length}");
+
+
+///////////////////////////////////////читает ASCII 
+// 1. Берём длину из frameBytes[7]
+//int length = frameBytes[7];
+
+//// 2. Создаём массив для данных
+
+//// создаём и заполняем массив payload безопасно
+//byte[] data = length == 0 ? Array.Empty<byte>() : new byte[20];
+
+//// 3. Копируем данные начиная с индекса 8
+//Array.Copy(frameBytes, 8, data, 0, frameBytes.Length - 9);
+//string text = System.Text.Encoding.ASCII.GetString(data).Trim('\0').Trim();
+//// Преобразуем массив байт в строку десятичных чисел
+////  string decimalString = string.Join("", data.Select(b => b.ToString("D")));
+//Func<byte, string> toDecimal = delegate (byte b) { return b.ToString("D"); };
+////   string decimalString = string.Join("", data.Select(toDecimal));
+//// Вызов события с десятичным выводом
+////    DataReceived?.Invoke($"RX -> {fullHex} ток = {decimalString}mA");
+
+
+
+////  DataReceived?.Invoke($"RX CHK FAIL-> {fullHex} ток = {BitConverter.ToString(data).Replace("-", "")}mA");
+
+
+//DataReceived?.Invoke($"RX CHK FAIL-> {fullHex} length:{text}");

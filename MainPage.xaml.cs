@@ -14,8 +14,13 @@ namespace Scb_Electronmash
         // Добавить внутрь класса MainPage (например сразу после поля _bluetoothService)
         private readonly Dictionary<string, string> _commands = new Dictionary<string, string>
         {
-            // Ключи точно соответствуют CommandParameter в XAML: "4|tokshelyf1" ... "4|tokshelyf16"
-            // Значения — примерные ASCII-HEX строки; замените их на реальные команды по необходимости.
+
+            // Ключи точно соответствуют CommandParameter в XAML: "1|Device_Name"      
+            ["1|Device_Name"] = "0101000021000080A3",
+
+
+
+            // Ключи точно соответствуют CommandParameter в XAML: "4|tokshelyf1" ... "4|tokshelyf16"      
             ["4|tokshelyf1"] = "01010000240501012D",
             ["4|tokshelyf2"] = "01010000240502012E",
             ["4|tokshelyf3"] = "01010000240503012F",
@@ -258,14 +263,20 @@ namespace Scb_Electronmash
         }
 
 
+        private async void OnPage1Tapped(object sender, EventArgs e)
+        {
+
+            await MainThread.InvokeOnMainThreadAsync(() =>
+                           DisplayAlert("Команда выбрана", $"Ключ: \nКоманда: ", "OK"));
+
+        }
 
 
 
 
 
 
-
-    }
+     }
 }
 
 
