@@ -2,7 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="Scb_Electronmash.MainPage"
-             Background="#0A5F74"
+               BackgroundColor="#0A5F74"
              Shell.NavBarIsVisible="True"
              Title="Меню     ВАРТА 16"
             
@@ -16,8 +16,8 @@
             <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
         <ScrollView Grid.Row="0">
-            <VerticalStackLayout Padding="5,5" Spacing="5">
-                <Border Stroke="#0B0101" StrokeThickness="2" StrokeShape="RoundRectangle 10" BackgroundColor="#b3d6bf" Padding="5" Margin="5" HeightRequest="200">
+            <VerticalStackLayout Padding="0,2" Spacing="2">
+                <Border Stroke="#0B0101" StrokeThickness="2" StrokeShape="RoundRectangle 14" BackgroundColor="#b3d6bf" Padding="5" Margin="5" HeightRequest="220">
                     <ScrollView x:Name="scrollView" VerticalOptions="Fill">
                         <Label x:Name="label4"
                                Text="receive data"
@@ -29,8 +29,8 @@
                                HorizontalTextAlignment="Start" />
                     </ScrollView>
                 </Border>
-                <Grid Margin="2" ColumnDefinitions="*,*,*" ColumnSpacing="10">
-                    <Button Margin="5"
+                <Grid Margin="1" ColumnDefinitions="*,*,*" ColumnSpacing="8">
+                    <Button Margin="8"
                             x:Name="CounterBtn"
                             Text="Rx"
                             FontAttributes="Bold"
@@ -41,14 +41,15 @@
                             Clicked="OnCounterClicked"
                             HorizontalOptions="Fill"
                             Grid.Column="0" />
-                    <Button Margin="5"
+                    <Button Margin="8"
                             Text="Clear data"
                             FontAttributes="Bold"
+                            FontSize="14"
                             TextColor="#01010d"
                             BackgroundColor="#b3d6bf"
                             Clicked="OnClear_Data_Dev"
                             Grid.Column="1" />
-                    <Button Margin="5"
+                    <Button Margin="8"
                             Text="Tx"
                             FontAttributes="Bold"
                             FontSize="14"

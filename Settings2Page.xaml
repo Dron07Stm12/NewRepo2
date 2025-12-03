@@ -12,8 +12,8 @@
               Padding="0,10,25,0">
             <!-- Первая строка: Bluetooth -->
             <Label Text="Bluetooth" 
-                   FontSize="20"
-                   TextColor="#6a056a"
+                   FontSize="22"
+                   TextColor="#4f094f"
                    FontAttributes="Bold"
                    VerticalOptions="Center"
                    Grid.Row="0"
@@ -29,8 +29,8 @@
 
             <!-- Вторая строка: Scan -->
             <Label Text="Scan" 
-                   FontSize="20"
-                   TextColor="#6a056a"
+                   FontSize="22"
+                   TextColor="#4f094f"
                    FontAttributes="Bold"
                    VerticalOptions="Center"
                    Grid.Row="1"
@@ -76,7 +76,7 @@
         <CollectionView x:Name="DevicesCollectionView"
                 ItemsLayout="VerticalList"
                 SelectionMode="None"  
-                HeightRequest="300">
+                HeightRequest="500">
             <CollectionView.ItemTemplate>
                 <DataTemplate>
                     <Grid Padding="10">
@@ -107,7 +107,14 @@
             </CollectionView.EmptyView>
         </CollectionView>
 
-
+        <!-- Вставьте эту строку в самый конец VerticalStackLayout -->
+        <Label Text="www.chelmash.com.ua"
+               HorizontalOptions="Center"
+               VerticalOptions="End"
+               TextColor="Black"
+                FontAttributes="Bold"
+               FontSize="18"
+               Margin="0,0,0,16"/>
 
     </VerticalStackLayout>
 </ContentPage>
