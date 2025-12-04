@@ -197,23 +197,42 @@
 
                                     <!-- Вертикальный список плиток (каждая плитка — Border с TapGestureRecognizer) -->
                                     <VerticalStackLayout Spacing="6" HorizontalOptions="Fill">
-                                            <Border Stroke="#0B0101"
+
+                                        <!-- Замените текущий Border (первую плитку) на этот Grid -->
+                                        <Grid ColumnDefinitions="*,Auto" HorizontalOptions="Fill" VerticalOptions="Center" Margin="0">
+                                            <!-- Колонка 0: сама "кнопка" -->
+                                            <Border Grid.Column="0"
+                                                Stroke="#0B0101"
                                                 StrokeThickness="1"
                                                 StrokeShape="RoundRectangle 6"
                                                 BackgroundColor="#107f36"
                                                 Padding="8"
                                                 HeightRequest="40"
                                                 HorizontalOptions="Fill">
-                                            <Border.GestureRecognizers>
-                                                <TapGestureRecognizer Tapped="OnShleyfTapped" CommandParameter="2|ServerPort1" />
-                                            </Border.GestureRecognizers>
+                                                <Border.GestureRecognizers>
+                                                    <TapGestureRecognizer Tapped="OnShleyfTapped" CommandParameter="2|ServerPort1" />
+                                                </Border.GestureRecognizers>
+
                                                 <Label Text="Config.ServerPort_1"
-                                               HorizontalOptions="Center"
-                                               VerticalOptions="Center"
-                                               InputTransparent="True"
-                                               TextColor="#000"
-                                               FontAttributes="Bold" />
+                                                   VerticalOptions="Center"
+                                                   HorizontalOptions="Start"
+                                                   InputTransparent="True"
+                                                   TextColor="#000"
+                                                   FontAttributes="Bold" />
                                             </Border>
+
+                                            <!-- Колонка 1: поле ввода вне "кнопки" -->
+                                            <Entry x:Name="ServerPort1Entry"
+                                               Grid.Column="1"
+                                               WidthRequest="120"
+                                               VerticalOptions="Center"
+                                               HorizontalOptions="End"
+                                               Margin="8,0,0,0"
+                                               Text=""
+                                               Keyboard="Numeric"
+                                               BackgroundColor="Transparent"/>
+                                        </Grid>
+
 
                                         <Border Stroke="#0B0101"
                                                 StrokeThickness="1"
