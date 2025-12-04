@@ -815,7 +815,8 @@ namespace Scb_Electronmash.Platforms.Android
                             //  string indexlString = string.Join("", index.Select(b => b.ToString("D")));
                             string indexlString = BitConverter.ToString(index).Replace("-", ""); // пример: "00030139"
 
-                            if (indexlString == "00002100") {
+                            if (indexlString == "00002100") //Страница 1 — ODE_Manufacturer_Device_Name
+                            {
                                 // 2. Создаём массив для данных
                                 // создаём и заполняем массив payload безопасно
                                 byte[] data = length == 0 ? Array.Empty<byte>() : new byte[128];
@@ -826,23 +827,52 @@ namespace Scb_Electronmash.Platforms.Android
                                 DataReceived?.Invoke($"RX-> {fullHex}\nиндекс: {indexlString}\nName:{text}");
                             }
 
-                            if (indexlString == "00002405")
+
+
+                            if (indexlString == "00002200") //Страница 2 — ip
                             {
+                                // 2. Создаём массив для данных
+                                // создаём и заполняем массив payload безопасно
+                                //byte[] data = length == 0 ? Array.Empty<byte>() : new byte[128];
 
-                                //// 2. Создаём массив для данных
-                                //// создаём и заполняем массив под данные
-                                //byte[] data = length == 0 ? Array.Empty<byte>() : new byte[length];
+                                //// 3. Копируем данные начиная с индекса 8
+                                //Array.Copy(frameBytes, 8, data, 0, frameBytes.Length - 9);
                                 //string text = System.Text.Encoding.ASCII.GetString(data).Trim('\0').Trim();
-                                //// Преобразуем массив байт в строку десятичных чисел
-                                ////  string decimalString = string.Join("", data.Select(b => b.ToString("D")));
-                                //Func<byte, string> toDecimal = delegate (byte b) { return b.ToString("D"); };
-                                //string decimalString = string.Join("", data.Select(toDecimal));
-                                //// Вызов события с десятичным выводом
-                                //DataReceived?.Invoke($"RX -> {fullHex} индекс:{indexlString}. субиндекс:{subindexString}. Ток = {decimalString}mA");
+                                //DataReceived?.Invoke($"RX-> {fullHex}\nиндекс: {indexlString}\nip: {text}");
 
-                                //////////////////////////////////////////////////////////////////////////////
-                                //// 1. Берём длину из frameBytes[7]
-                                //int length = frameBytes[7];
+
+                                ////////////////////////////////////////
+                                // 2. Создаём массив для данных
+                                byte[] data = length == 0 ? Array.Empty<byte>() : new byte[128];
+
+                                // 3. Копируем данные начиная с индекса 8 — но безопасно, не выходя за границы
+                                int maxFromFrame = Math.Max(0, frameBytes.Length - 9);              // сколько байт есть от payloadStart(8) до предпоследнего (не включая чек‑байт)
+                                int copyCount = Math.Min(data.Length, maxFromFrame);               // сколько реально можно скопировать в data
+                                if (copyCount > 0) Array.Copy(frameBytes, 8, data, 0, copyCount);
+
+                                // Декодируем только первые байты до NUL (0x00)
+                                int nulIndex = Array.FindIndex(data, 0, copyCount, b => b == 0x00);
+                                int textLen = nulIndex >= 0 ? nulIndex : copyCount;
+                                string text = textLen > 0
+                                    ? System.Text.Encoding.ASCII.GetString(data, 0, textLen).Trim()
+                                    : string.Empty;
+
+                                DataReceived?.Invoke($"RX-> {fullHex}\nиндекс: {indexlString}\nip: {text}");
+
+
+
+                                ///////////////////////////////////////
+
+                            }
+
+
+
+
+
+
+
+                            if (indexlString == "00002405") //Страница 4 — Ток шлейфов
+                            {
 
                                 //// 2. Создаём массив для данных
 
@@ -865,29 +895,10 @@ namespace Scb_Electronmash.Platforms.Android
                             }
 
 
-                                // 2. Создаём массив для данных
-                                // создаём и заполняем массив payload безопасно
-                                //byte[] data = length == 0 ? Array.Empty<byte>() : new byte[20];
-
-                                //// 3. Копируем данные начиная с индекса 8
-                                //Array.Copy(frameBytes, 8, data, 0, frameBytes.Length - 9);
-                                //string text = System.Text.Encoding.ASCII.GetString(data).Trim('\0').Trim();
-                                //// Преобразуем массив байт в строку десятичных чисел
-                                //  string decimalString = string.Join("", data.Select(b => b.ToString("D")));
-                                //   Func<byte, string> toDecimal = delegate (byte b) { return b.ToString("D"); };
-                                //   string decimalString = string.Join("", data.Select(toDecimal));
-                                // Вызов события с десятичным выводом
-                                //    DataReceived?.Invoke($"RX -> {fullHex} ток = {decimalString}mA");
 
 
 
-                                //  DataReceived?.Invoke($"RX CHK FAIL-> {fullHex} ток = {BitConverter.ToString(data).Replace("-", "")}mA");
-
-
-                                //  DataReceived?.Invoke($"RX CHK FAIL-> {fullHex}, индекс: {indexlString}. length:{text}");
-
-
-                                ////////////////////////////////
+                               
 
                             }
                     } // parse loop
@@ -1325,3 +1336,61 @@ DataReceived?.Invoke($"RX CHK FAIL-> {fullHex} ток = {BitConverter.ToString(d
 //    //  DataReceived?.Invoke($"RX CHK FAIL-> {fullHex} length:{text}");
 
 //}
+
+
+
+
+
+//////////////////////////////
+///
+
+
+//// 2. Создаём массив для данных
+//// создаём и заполняем массив под данные
+//byte[] data = length == 0 ? Array.Empty<byte>() : new byte[length];
+//string text = System.Text.Encoding.ASCII.GetString(data).Trim('\0').Trim();
+//// Преобразуем массив байт в строку десятичных чисел
+////  string decimalString = string.Join("", data.Select(b => b.ToString("D")));
+//Func<byte, string> toDecimal = delegate (byte b) { return b.ToString("D"); };
+//string decimalString = string.Join("", data.Select(toDecimal));
+//// Вызов события с десятичным выводом
+//DataReceived?.Invoke($"RX -> {fullHex} индекс:{indexlString}. субиндекс:{subindexString}. Ток = {decimalString}mA");
+
+//////////////////////////////////////////////////////////////////////////////
+//// 1. Берём длину из frameBytes[7]
+//int length = frameBytes[7];
+
+
+
+
+
+
+
+
+
+
+
+
+// 2. Создаём массив для данных
+// создаём и заполняем массив payload безопасно
+//byte[] data = length == 0 ? Array.Empty<byte>() : new byte[20];
+
+//// 3. Копируем данные начиная с индекса 8
+//Array.Copy(frameBytes, 8, data, 0, frameBytes.Length - 9);
+//string text = System.Text.Encoding.ASCII.GetString(data).Trim('\0').Trim();
+//// Преобразуем массив байт в строку десятичных чисел
+//  string decimalString = string.Join("", data.Select(b => b.ToString("D")));
+//   Func<byte, string> toDecimal = delegate (byte b) { return b.ToString("D"); };
+//   string decimalString = string.Join("", data.Select(toDecimal));
+// Вызов события с десятичным выводом
+//    DataReceived?.Invoke($"RX -> {fullHex} ток = {decimalString}mA");
+
+
+
+//  DataReceived?.Invoke($"RX CHK FAIL-> {fullHex} ток = {BitConverter.ToString(data).Replace("-", "")}mA");
+
+
+//  DataReceived?.Invoke($"RX CHK FAIL-> {fullHex}, индекс: {indexlString}. length:{text}");
+
+
+////////////////////////////////

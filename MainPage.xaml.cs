@@ -18,7 +18,15 @@ namespace Scb_Electronmash
             // Ключи точно соответствуют CommandParameter в XAML: "1|Device_Name"      
             ["1|Device_Name"] = "0101000021000080A3",
 
-
+            // Ключи точно соответствуют CommandParameter в XAML: "1|Device_Name"
+            ["2|ServerPort1"] = "010100002200040830",
+            ["2|ServerPort2"] = "010100002200050831",
+            ["2|ipServer1"]   = "01010000220006103A",
+            ["2|ipServer2"]   = "01010000220007103B",
+            ["2|SMSPhone1"]   = "010100002200081844",
+            //["2|ServerPort6"] = "010100002200090835",
+            //["2|ServerPort7"] = "0101000022000A0836",
+            //["2|ServerPort8"] = "0101000022000B0837",
 
             // Ключи точно соответствуют CommandParameter в XAML: "4|tokshelyf1" ... "4|tokshelyf16"      
             ["4|tokshelyf1"] = "01010000240501012D",

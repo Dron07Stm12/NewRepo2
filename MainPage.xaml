@@ -4,7 +4,7 @@
              x:Class="Scb_Electronmash.MainPage"
                BackgroundColor="#0A5F74"
              Shell.NavBarIsVisible="True"
-             Title="Меню     ВАРТА 16"
+             Title="Меню     ВАРТА 816"
             
              >
 
@@ -114,7 +114,10 @@
                                             <Setter Property="IsVisible" Value="False" />
                                         </DataTrigger>
 
-
+                                        <!-- скрываем общий заголовок на странице 2 -->
+                                        <DataTrigger TargetType="StackLayout" Binding="{Binding .}" Value="Страница 2:">
+                                            <Setter Property="IsVisible" Value="False" />
+                                        </DataTrigger>
 
 
                                         <DataTrigger TargetType="StackLayout" Binding="{Binding .}" Value="Страница 4:">
@@ -175,10 +178,123 @@
 
 
 
+                                
+                                <!-- Page2Block: плитки одна под другой (вертикально). 
+                                Вставьте этот фрагмент внутрь вашего DataTemplate, заменив текущий Page2Block -->
+                                <VerticalStackLayout x:Name="Page2Block"
+                                     Grid.Row="1"
+                                     IsVisible="False"
+                                     VerticalOptions="Start"
+                                     Spacing="8"
+                                     Margin="8,0,8,0"
+                                     HorizontalOptions="Fill">
 
+                                    <Label Text="Страница 2 — TK_SETTINGS"
+                                   TextColor="Black"
+                                   FontSize="16"
+                                   FontAttributes="Bold"
+                                   HorizontalOptions="Start" />
 
+                                    <!-- Вертикальный список плиток (каждая плитка — Border с TapGestureRecognizer) -->
+                                    <VerticalStackLayout Spacing="6" HorizontalOptions="Fill">
+                                            <Border Stroke="#0B0101"
+                                                StrokeThickness="1"
+                                                StrokeShape="RoundRectangle 6"
+                                                BackgroundColor="#107f36"
+                                                Padding="8"
+                                                HeightRequest="40"
+                                                HorizontalOptions="Fill">
+                                            <Border.GestureRecognizers>
+                                                <TapGestureRecognizer Tapped="OnShleyfTapped" CommandParameter="2|ServerPort1" />
+                                            </Border.GestureRecognizers>
+                                                <Label Text="Config.ServerPort_1"
+                                               HorizontalOptions="Center"
+                                               VerticalOptions="Center"
+                                               InputTransparent="True"
+                                               TextColor="#000"
+                                               FontAttributes="Bold" />
+                                            </Border>
 
+                                        <Border Stroke="#0B0101"
+                                                StrokeThickness="1"
+                                                StrokeShape="RoundRectangle 6"
+                                                BackgroundColor="#107f36"
+                                                Padding="8"
+                                                HeightRequest="40"
+                                                HorizontalOptions="Fill">
+                                            <Border.GestureRecognizers>
+                                                <TapGestureRecognizer Tapped="OnShleyfTapped" CommandParameter="2|ServerPort2" />
+                                            </Border.GestureRecognizers>
+                                            <Label Text="Config.ServerPort_2"
+                                               HorizontalOptions="Center"
+                                               VerticalOptions="Center"
+                                               InputTransparent="True"
+                                               TextColor="#000"
+                                               FontAttributes="Bold" />
+                                        </Border>
 
+                                        <Border Stroke="#0B0101"
+                                            StrokeThickness="1"
+                                            StrokeShape="RoundRectangle 6"
+                                            BackgroundColor="#107f36"
+                                            Padding="8"
+                                            HeightRequest="40"
+                                            HorizontalOptions="Fill">
+                                            <Border.GestureRecognizers>
+                                                <TapGestureRecognizer Tapped="OnShleyfTapped" CommandParameter="2|ipServer1" />
+                                            </Border.GestureRecognizers>
+                                            <Label Text="Config.IpServer_1"
+                                           HorizontalOptions="Center"
+                                           VerticalOptions="Center"
+                                           InputTransparent="True"
+                                           TextColor="#000"
+                                           FontAttributes="Bold" />
+                                        </Border>
+
+                                        <Border Stroke="#0B0101"
+                                            StrokeThickness="1"
+                                            StrokeShape="RoundRectangle 6"
+                                            BackgroundColor="#107f36"
+                                            Padding="8"
+                                            HeightRequest="40"
+                                            HorizontalOptions="Fill">
+                                            <Border.GestureRecognizers>
+                                                <TapGestureRecognizer Tapped="OnShleyfTapped" CommandParameter="2|ipServer2" />
+                                            </Border.GestureRecognizers>
+                                            <Label Text="Config.IpServer_2"
+                                               HorizontalOptions="Center"
+                                               VerticalOptions="Center"
+                                               InputTransparent="True"
+                                               TextColor="#000"
+                                               FontAttributes="Bold" />
+                                        </Border>
+
+                                        <Border Stroke="#0B0101"
+                                         StrokeThickness="1"
+                                         StrokeShape="RoundRectangle 6"
+                                         BackgroundColor="#107f36"
+                                         Padding="8"
+                                         HeightRequest="40"
+                                         HorizontalOptions="Fill">
+                                            <Border.GestureRecognizers>
+                                                <TapGestureRecognizer Tapped="OnShleyfTapped" CommandParameter="2|SMSPhone1" />
+                                            </Border.GestureRecognizers>
+                                            <Label Text="Config.SMSPhone_1"
+                                                    HorizontalOptions="Center"
+                                                    VerticalOptions="Center"
+                                                    InputTransparent="True"
+                                                    TextColor="#000"
+                                                    FontAttributes="Bold" />
+                                        </Border>
+
+                                    </VerticalStackLayout>
+
+                                    <VerticalStackLayout.Triggers>
+                                        <DataTrigger TargetType="VerticalStackLayout" Binding="{Binding .}" Value="Страница 2:">
+                                            <Setter Property="IsVisible" Value="True" />
+                                        </DataTrigger>
+                                    </VerticalStackLayout.Triggers>
+                                </VerticalStackLayout>
 
 
 
