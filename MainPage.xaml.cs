@@ -15,10 +15,12 @@ namespace Scb_Electronmash
         private readonly Dictionary<string, string> _commands = new Dictionary<string, string>
         {
 
-            // Ключи точно соответствуют CommandParameter в XAML: "1|Device_Name"      
+            // Ключи точно соответствуют CommandParameter в XAML: "1|Device_Name"    // 010100002200010429  //2|CodeObject1
             ["1|Device_Name"] = "0101000021000080A3",
 
+
             // Ключи точно соответствуют CommandParameter в XAML: "1|Device_Name"
+            ["2|CodeObject1"] = "010100002200010429",
             ["2|ServerPort1"] = "010100002200040830",
             ["2|ServerPort2"] = "010100002200050831",
             ["2|ipServer1"]   = "01010000220006103A",
@@ -84,12 +86,14 @@ namespace Scb_Electronmash
         // Поле для хранения последней выбранной команды (ASCII HEX)
         private string? _lastSelectedCommand = null;
 
+        private string? _stringentry = null;
+
 
         public MainPage(IBluetooth_service bluetooth)
         {
             InitializeComponent();
             _bluetoothService = bluetooth;
-
+          //  BindingContext = this;
 
             // Подписываемся на событие получения данных из Bluetooth-сервиса
             _bluetoothService.DataReceived += OnDataReceived;
@@ -273,18 +277,73 @@ namespace Scb_Electronmash
 
         private async void OnPage1Tapped(object sender, EventArgs e)
         {
+            try
+            {
+                // Получаем значение из Entry как раньше...
+                var source = (sender as TapGestureRecognizer)?.Parent as VisualElement ?? sender as VisualElement;
+                var parent = source;
+                while (parent != null && !(parent is Grid)) parent = parent.Parent as VisualElement;
 
-            await MainThread.InvokeOnMainThreadAsync(() =>
-                           DisplayAlert("Команда выбрана", $"Ключ: \nКоманда: ", "OK"));
+                string value = null;
+                if (parent is Grid grid)
+                {
+                    var entry = grid.Children.OfType<Entry>().FirstOrDefault(en => Grid.GetColumn(en) == 1)
+                                ?? grid.Children.OfType<Entry>().FirstOrDefault();
+                    value = entry?.Text?.Trim();
+                }
 
+                if (string.IsNullOrWhiteSpace(value))
+                {
+                    await MainThread.InvokeOnMainThreadAsync(() => DisplayAlert("Ошибка", "Поле пустое", "OK"));
+                 //   await _bluetoothService.TransmitterData();
+                    return;
+                }
+
+                // Простая валидация/ограничение длины
+                if (value.Length > 250)
+                {
+                    await MainThread.InvokeOnMainThreadAsync(() => DisplayAlert("Ошибка", "Слишком длинная строка", "OK"));
+                    return;
+                }
+
+                // Откл. UI / защита от повторных тапов — пример: отключаем sender, можно кастомизировать
+                try { (sender as VisualElement).IsEnabled = false; } catch { }
+
+                await Task.Delay(100);
+                try
+                {
+                    await _bluetoothService.TransmitterData_write(value, 0x02, 0x01, null, null, true);
+                 
+                    await MainThread.InvokeOnMainThreadAsync(() => DisplayAlert("OK", $"Отправлено: {value}", "OK"));
+                }
+                catch (ArgumentOutOfRangeException ex)
+                {
+                    await MainThread.InvokeOnMainThreadAsync(() => DisplayAlert("Ошибка", "Данные слишком длинные", "OK"));
+                }
+                catch (InvalidOperationException ex)
+                {
+                    await MainThread.InvokeOnMainThreadAsync(() => DisplayAlert("Ошибка", "Bluetooth не готов", "OK"));
+                }
+                catch (Exception ex)
+                {
+                    await MainThread.InvokeOnMainThreadAsync(() => DisplayAlert("Ошибка", "Не удалось отправить данные", "OK"));
+                    System.Diagnostics.Debug.WriteLine(ex);
+                }
+                finally
+                {
+                    try { (sender as VisualElement).IsEnabled = true; } catch { }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"OnPage1Tapped exception: {ex}");
+            }
         }
 
 
 
 
-
-
-     }
+    }
 }
 
 

@@ -58,5 +58,19 @@ namespace Scb_Electronmash
         // перегрузка метода по передаче данных с парамет
         Task TransmitterData(string asciiHex);
 
+
+        //Task TransmitterData(string dataAscii,
+        //                          byte start,         // логическое поле start внутри кадра (обычно 0x01 или 0x02)
+        //                          byte read,          // поле read (в примерах 0x01)
+        //                          byte[] index,       // 4 байта index, по умолчанию 00 00 22 00
+        //                          byte subindex,      // subindex, по умолчанию 0x01
+        //                          bool wrapWithRawStartStop = true // оборачивать ли кадр rawStart/rawStop при отправке
+        //                      );
+
+
+        Task TransmitterData_write(string dataAscii, byte read = 0x02, byte address = 0x01, byte[] index = null, byte? subindex = null, bool wrapWithRawStartStop = true);
+
+
+
     }
 }

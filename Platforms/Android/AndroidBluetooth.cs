@@ -843,6 +843,8 @@ namespace Scb_Electronmash.Platforms.Android
 
                                 ////////////////////////////////////////
                                 // 2. Создаём массив для данных
+                                if (subindex == 0x01) 
+                                { 
                                 byte[] data = length == 0 ? Array.Empty<byte>() : new byte[128];
 
                                 // 3. Копируем данные начиная с индекса 8 — но безопасно, не выходя за границы
@@ -857,7 +859,32 @@ namespace Scb_Electronmash.Platforms.Android
                                     ? System.Text.Encoding.ASCII.GetString(data, 0, textLen).Trim()
                                     : string.Empty;
 
-                                DataReceived?.Invoke($"RX-> {fullHex}\nиндекс: {indexlString}\nip: {text}");
+                                //    DataReceived?.Invoke($"RX-> {fullHex}\nиндекс: {indexlString}\nCodeObject1: {text}");
+                                    DataReceived?.Invoke($"субиндекс: {subindex}  индекс: {indexlString}\nCodeObject1: {text}");
+
+                                }
+
+
+                                if (subindex == 0x04)
+                                {
+                                    byte[] data = length == 0 ? Array.Empty<byte>() : new byte[128];
+
+                                    // 3. Копируем данные начиная с индекса 8 — но безопасно, не выходя за границы
+                                    int maxFromFrame = Math.Max(0, frameBytes.Length - 9);              // сколько байт есть от payloadStart(8) до предпоследнего (не включая чек‑байт)
+                                    int copyCount = Math.Min(data.Length, maxFromFrame);               // сколько реально можно скопировать в data
+                                    if (copyCount > 0) Array.Copy(frameBytes, 8, data, 0, copyCount);
+
+                                    // Декодируем только первые байты до NUL (0x00)
+                                    int nulIndex = Array.FindIndex(data, 0, copyCount, b => b == 0x00);
+                                    int textLen = nulIndex >= 0 ? nulIndex : copyCount;
+                                    string text = textLen > 0
+                                        ? System.Text.Encoding.ASCII.GetString(data, 0, textLen).Trim()
+                                        : string.Empty;
+
+                                    //    DataReceived?.Invoke($"RX-> {fullHex}\nиндекс: {indexlString}\nCodeObject1: {text}");
+                                    DataReceived?.Invoke($"субиндекс: {subindex}  индекс: {indexlString}\nServerPort1: {text}");
+
+                                }
 
 
 
@@ -953,7 +980,7 @@ namespace Scb_Electronmash.Platforms.Android
 
             try
             {
-                string asciiHex = "0101000021000080A3"; // команда в ASCII HEX формате //0101000021000080A3 //01010000240501012D
+                string asciiHex = "02010000220001053138313400F9"; // команда в ASCII HEX формате //0101000021000080A3 //01010000240501012D
                 //Эти байты будут вставлены в начало и конец буфера как «сырые» (не ASCII). PIC ISR смотрит именно на такие «raw» старт/стоп.
                 byte rawStart = 0x01; // стартовый байт
                 byte rawStop = 0x05;  // стоповый байт
@@ -1059,12 +1086,105 @@ namespace Scb_Electronmash.Platforms.Android
             }
         }
 
+        //////////////////////////////
+        private static readonly SemaphoreSlim _txLock = new SemaphoreSlim(1, 1);
 
+        public async Task TransmitterData_write(string dataAscii,
+                                               byte read = 0x02,
+                                               byte address = 0x01,
+                                               byte[] index = null,
+                                               byte? subindex = null,
+                                               bool wrapWithRawStartStop = true)
+        {
+            await _txLock.WaitAsync();
+            try
+            {
+                if (bluetoothSocket == null || bluetoothSocket.OutputStream == null)
+                    throw new InvalidOperationException("Bluetooth socket not ready");
 
+                // Внешние raw как в TransmitterData()
+                const byte rawStart = 0x01;
+                const byte rawStop = 0x05;
 
+                index ??= new byte[] { 0x00, 0x00, 0x22, 0x00 };
+                if (index.Length != 4) throw new ArgumentException("index must be exactly 4 bytes", nameof(index));
+                byte usedSubindex = subindex ?? 0x01;
 
+                // данные ASCII + NUL
+                byte[] dataBytes = Encoding.ASCII.GetBytes(dataAscii ?? string.Empty);
+                if (dataBytes.Length + 1 > 255) throw new ArgumentOutOfRangeException(nameof(dataAscii));
+                byte[] dataWithNull = new byte[dataBytes.Length + 1];
+                Array.Copy(dataBytes, 0, dataWithNull, 0, dataBytes.Length);
+                dataWithNull[dataBytes.Length] = 0x00;
 
+                // формируем внутренний (бинарный) фрейм: read, address, index(4), subindex, length, data...
+                var frame = new List<byte>(7 + index.Length + dataWithNull.Length);
+                frame.Add(read);
+                frame.Add(address);
+                frame.AddRange(index);
+                frame.Add(usedSubindex);
+                frame.Add((byte)dataWithNull.Length);
+                frame.AddRange(dataWithNull);
 
+                // checksum по внутреннему фрейму
+                int sum = 0;
+                foreach (var b in frame) sum += b;
+                byte chk = (byte)(sum & 0xFF);
+                frame.Add(chk);
+
+                // Бинарный внутренний фрейм (включая chk)
+                byte[] frameBytes = frame.ToArray();
+                var innerBinaryHex = BitConverter.ToString(frameBytes).Replace("-", "");
+                System.Diagnostics.Debug.WriteLine($"INNER FRAME (binary with chk): {innerBinaryHex}");
+                System.Diagnostics.Debug.WriteLine($"rawStart=0x{rawStart:X2}, rawStop=0x{rawStop:X2}");
+
+                // Конвертируем внутренний фрейм в ASCII-HEX (каждый байт -> 2 ASCII символа '0'..'F')
+                string asciiHex = innerBinaryHex; // уже в виде "0201..." верхнего регистра
+                var asciiBytes = Encoding.ASCII.GetBytes(asciiHex);
+                System.Diagnostics.Debug.WriteLine($"INNER FRAME (ASCII-HEX text): {asciiHex}");
+
+                // Формируем toSend: rawStart + asciiBytes + rawStop  (или без обёртки если wrapWithRawStartStop=false)
+                byte[] toSend;
+                if (wrapWithRawStartStop)
+                {
+                    toSend = new byte[1 + asciiBytes.Length + 1];
+                    toSend[0] = rawStart;
+                    Array.Copy(asciiBytes, 0, toSend, 1, asciiBytes.Length);
+                    toSend[toSend.Length - 1] = rawStop;
+                }
+                else
+                {
+                    toSend = asciiBytes;
+                }
+
+                // Лог итогового буфера (HEX представление байтов toSend)
+                var hex = BitConverter.ToString(toSend).Replace("-", "");
+                System.Diagnostics.Debug.WriteLine($"TX (HEX): {hex}");
+
+                // Отправляем
+                try
+                {
+                    var outStream = bluetoothSocket.OutputStream;
+                    await outStream.WriteAsync(toSend, 0, toSend.Length).ConfigureAwait(false);
+                    await outStream.FlushAsync().ConfigureAwait(false);
+
+                    System.Diagnostics.Debug.WriteLine("TX OK");
+                }
+                catch (Exception writeEx)
+                {
+                    System.Diagnostics.Debug.WriteLine($"TX ERROR: {writeEx}");
+                    throw;
+                }
+            }
+            finally
+            {
+                _txLock.Release();
+            }
+        }
+        //public Task TransmitterData(string dataAscii, byte start, byte read, byte[] index, byte subindex, bool wrapWithRawStartStop = true)
+        //{
+        //    throw new NotImplementedException();
+        //}
         /////////////////////////
 
     }
