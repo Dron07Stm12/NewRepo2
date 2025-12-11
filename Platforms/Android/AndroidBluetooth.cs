@@ -829,7 +829,7 @@ namespace Scb_Electronmash.Platforms.Android
 
 
 
-                            if (indexlString == "00002200") //Страница 2 — ip
+                            if (indexlString == "00002200") //Страница 2 
                             {
                                 // 2. Создаём массив для данных
                                 // создаём и заполняем массив payload безопасно
@@ -863,6 +863,54 @@ namespace Scb_Electronmash.Platforms.Android
                                     DataReceived?.Invoke($"субиндекс: {subindex}  индекс: {indexlString}\nCodeObject1: {text}");
 
                                 }
+
+                                if (subindex == 0x02)
+                                {
+                                    byte[] data = length == 0 ? Array.Empty<byte>() : new byte[128];
+
+                                    // 3. Копируем данные начиная с индекса 8 — но безопасно, не выходя за границы
+                                    int maxFromFrame = Math.Max(0, frameBytes.Length - 9);              // сколько байт есть от payloadStart(8) до предпоследнего (не включая чек‑байт)
+                                    int copyCount = Math.Min(data.Length, maxFromFrame);               // сколько реально можно скопировать в data
+                                    if (copyCount > 0) Array.Copy(frameBytes, 8, data, 0, copyCount);
+
+                                    // Декодируем только первые байты до NUL (0x00)
+                                    int nulIndex = Array.FindIndex(data, 0, copyCount, b => b == 0x00);
+                                    int textLen = nulIndex >= 0 ? nulIndex : copyCount;
+                                    string text = textLen > 0
+                                        ? System.Text.Encoding.ASCII.GetString(data, 0, textLen).Trim()
+                                        : string.Empty;
+
+                                    //    DataReceived?.Invoke($"RX-> {fullHex}\nиндекс: {indexlString}\nCodeObject1: {text}");
+                                    DataReceived?.Invoke($"субиндекс: {subindex}  индекс: {indexlString}\nAccessPoint1: {text}");
+
+                                }
+
+
+                                if (subindex == 0x03)
+                                {
+                                    byte[] data = length == 0 ? Array.Empty<byte>() : new byte[128];
+
+                                    // 3. Копируем данные начиная с индекса 8 — но безопасно, не выходя за границы
+                                    int maxFromFrame = Math.Max(0, frameBytes.Length - 9);              // сколько байт есть от payloadStart(8) до предпоследнего (не включая чек‑байт)
+                                    int copyCount = Math.Min(data.Length, maxFromFrame);               // сколько реально можно скопировать в data
+                                    if (copyCount > 0) Array.Copy(frameBytes, 8, data, 0, copyCount);
+
+                                    // Декодируем только первые байты до NUL (0x00)
+                                    int nulIndex = Array.FindIndex(data, 0, copyCount, b => b == 0x00);
+                                    int textLen = nulIndex >= 0 ? nulIndex : copyCount;
+                                    string text = textLen > 0
+                                        ? System.Text.Encoding.ASCII.GetString(data, 0, textLen).Trim()
+                                        : string.Empty;
+
+                                    //    DataReceived?.Invoke($"RX-> {fullHex}\nиндекс: {indexlString}\nCodeObject1: {text}");
+                                    DataReceived?.Invoke($"субиндекс: {subindex}  индекс: {indexlString}\nAccessPoint2: {text}");
+
+                                }
+
+
+
+
+
 
 
                                 if (subindex == 0x04)

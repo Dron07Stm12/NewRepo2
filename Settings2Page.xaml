@@ -86,8 +86,9 @@
                         </Grid.ColumnDefinitions>
 
                         <StackLayout Orientation="Vertical">
-                            <Label Text="{Binding Name}" FontSize="16" TextColor="#a0da0a" />
-                            <Label Text="{Binding Address}" FontSize="12"  FontAttributes="Bold"  TextColor="Black"/>
+
+                            <Label Text="{Binding Name}" FontSize="18"  FontAttributes="Bold"  TextColor="#238e05" />
+                            <Label Text="{Binding Address}" FontSize="16"  FontAttributes="Bold"  TextColor="Black"/>
                         </StackLayout>
 
                         <!-- Добавлен минимальный TapGestureRecognizer -->

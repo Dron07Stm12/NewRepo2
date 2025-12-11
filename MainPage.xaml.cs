@@ -15,12 +15,14 @@ namespace Scb_Electronmash
         private readonly Dictionary<string, string> _commands = new Dictionary<string, string>
         {
 
-            // Ключи точно соответствуют CommandParameter в XAML: "1|Device_Name"    // 010100002200010429  //2|CodeObject1
+            // Ключи точно соответствуют CommandParameter в XAML: "1|Device_Name"    первая страница
             ["1|Device_Name"] = "0101000021000080A3",
 
 
-            // Ключи точно соответствуют CommandParameter в XAML: "1|Device_Name"
+            // Ключи точно соответствуют CommandParameter в XAML: "2|CodeObject1"  вторая страница 
             ["2|CodeObject1"] = "010100002200010429",
+            ["2|AccessPoint1"] ="01010000220002183E",
+            ["2|AccessPoint2"] ="01010000220003183F",
             ["2|ServerPort1"] = "010100002200040830",
             ["2|ServerPort2"] = "010100002200050831",
             ["2|ipServer1"]   = "01010000220006103A",
@@ -135,7 +137,7 @@ namespace Scb_Electronmash
                 if (string.IsNullOrWhiteSpace(_lastSelectedCommand))
                 {
                     await MainThread.InvokeOnMainThreadAsync(() =>
-                        DisplayAlert("Transmitter", "Команда не выбрана. Сначала нажмите на шлейф.", "OK"));
+                        DisplayAlert("Transmitter", "Команда не выбрана. Сначала нажмите на обьект.", "OK"));
                     return;
                 }
 
@@ -189,52 +191,7 @@ namespace Scb_Electronmash
             }
         }
 
-
-
-
-        
         // Обработчик тапов для "ток шлейфа 1" / "ток шлейфа 2"
-        //private async void OnShleyfTapped(object sender, EventArgs e)
-        //{
-           
-
-        //    try
-        //    {
-        //        Debug.WriteLine($"OnShleyfTapped invoked; sender type = {(sender?.GetType().Name ?? "(null)")}");
-
-        //        string param = null;
-
-        //        // Если sender — сам TapGestureRecognizer
-        //        if (sender is TapGestureRecognizer tap)
-        //        {
-        //            param = tap.CommandParameter?.ToString();
-        //        }
-        //        // Если sender — View (Border и т.п.), берём его GestureRecognizers
-        //        else if (sender is Microsoft.Maui.Controls.View view)
-        //        {
-        //            var tg = view.GestureRecognizers?.OfType<TapGestureRecognizer>().FirstOrDefault();
-        //            param = tg?.CommandParameter?.ToString();
-        //        }
-
-        //        Debug.WriteLine($"OnShleyfTapped param = {(param ?? "(null)")}");
-
-        //        var parts = (param ?? "(no param)").Split('|');
-        //        var page = parts.Length > 0 ? parts[0] : "?";
-        //        var id = parts.Length > 1 ? parts[1] : "?";
-
-        //        // Показываем алерт на UI-потоке
-        //        await MainThread.InvokeOnMainThreadAsync(() =>
-        //            DisplayAlert("Нажато", $"Страница {page}: {id}", "OK"));
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        Debug.WriteLine($"OnShleyfTapped exception: {ex}");
-        //    }
-
-
-        //}
-
-
         private async void OnShleyfTapped(object sender, EventArgs e)
         {
             try
@@ -274,74 +231,140 @@ namespace Scb_Electronmash
             }
         }
 
+        //тапет для записи данных
 
+        // Обработчик тапов для записи данных с учетом CommandParameter
         private async void OnPage1Tapped(object sender, EventArgs e)
         {
             try
             {
-                // Получаем значение из Entry как раньше...
-                var source = (sender as TapGestureRecognizer)?.Parent as VisualElement ?? sender as VisualElement;
-                var parent = source;
-                while (parent != null && !(parent is Grid)) parent = parent.Parent as VisualElement;
+                string param = null;
+                // Способы извлечения CommandParameter
+                if (sender is TapGestureRecognizer tap)
+                    param = tap.CommandParameter?.ToString();
+                else if (sender is Microsoft.Maui.Controls.View view)
+                    param = view.GestureRecognizers?.OfType<TapGestureRecognizer>().FirstOrDefault()?.CommandParameter?.ToString();
+
+                var parts = (param ?? "(no param)").Split('|');
+                var page = parts.Length > 0 ? parts[0] : "?";
+                var id = parts.Length > 1 ? parts[1] : "?";
+
+                string key = $"{page}|{id}";
+
+                // Попытка взять команду из словаря
+                if (!_commands.TryGetValue(key, out var asciiHex))
+                {
+                    Debug.WriteLine($"Key not found in commands: {key}");
+                    await MainThread.InvokeOnMainThreadAsync(() =>
+                        DisplayAlert("Ошибка", $"Команда для ключа {key} не найдена в словаре", "OK"));
+                    return;
+                }
+
+                Debug.WriteLine($"Selected key = {key}, asciiHex = {asciiHex}");
+
+                // Парсим команду для извлечения индекса и субиндекса
+                byte[] index;
+                byte subindex;
+
+                try
+                {
+                    var parsedData = ParseCommand(asciiHex);
+                    index = parsedData.index;
+                    subindex = parsedData.subindex;
+
+                    Debug.WriteLine($"Parsed Command - Index: {BitConverter.ToString(index)}, Subindex: {subindex:X2}");
+
+                    await MainThread.InvokeOnMainThreadAsync(() =>
+                        DisplayAlert("Команда выбрана", $"Index: {BitConverter.ToString(index)}\nSubindex: {subindex:X2}", "OK"));
+                }
+                catch (Exception parseEx)
+                {
+                    Debug.WriteLine($"ParseCommand Exception: {parseEx}");
+                    await DisplayAlert("Ошибка", $"Ошибка разбора команды: {parseEx.Message}", "OK");
+                    return;
+                }
+
+                // Получение значения из Entry
+                var parent = sender as VisualElement;
+                while (parent != null && !(parent is Grid))
+                    parent = parent.Parent as VisualElement;
 
                 string value = null;
                 if (parent is Grid grid)
                 {
-                    var entry = grid.Children.OfType<Entry>().FirstOrDefault(en => Grid.GetColumn(en) == 1)
-                                ?? grid.Children.OfType<Entry>().FirstOrDefault();
+                    var entry = grid.Children.OfType<Entry>().FirstOrDefault(en => Grid.GetColumn(en) == 1);
                     value = entry?.Text?.Trim();
                 }
 
                 if (string.IsNullOrWhiteSpace(value))
                 {
-                    await MainThread.InvokeOnMainThreadAsync(() => DisplayAlert("Ошибка", "Поле пустое", "OK"));
-                 //   await _bluetoothService.TransmitterData();
+                    await MainThread.InvokeOnMainThreadAsync(() =>
+                        DisplayAlert("Ошибка", "Поле ввода пустое", "OK"));
+                    Debug.WriteLine("Entry value is empty or null.");
                     return;
                 }
+
+                Debug.WriteLine($"Entry Value: {value}");
 
                 // Простая валидация/ограничение длины
                 if (value.Length > 250)
                 {
-                    await MainThread.InvokeOnMainThreadAsync(() => DisplayAlert("Ошибка", "Слишком длинная строка", "OK"));
+                    await DisplayAlert("Ошибка", "Слишком длинная строка", "OK");
                     return;
                 }
 
-                // Откл. UI / защита от повторных тапов — пример: отключаем sender, можно кастомизировать
-                try { (sender as VisualElement).IsEnabled = false; } catch { }
-
-                await Task.Delay(100);
                 try
                 {
-                    await _bluetoothService.TransmitterData_write(value, 0x02, 0x01, null, null, true);
-                 
-                    await MainThread.InvokeOnMainThreadAsync(() => DisplayAlert("OK", $"Отправлено: {value}", "OK"));
-                }
-                catch (ArgumentOutOfRangeException ex)
-                {
-                    await MainThread.InvokeOnMainThreadAsync(() => DisplayAlert("Ошибка", "Данные слишком длинные", "OK"));
-                }
-                catch (InvalidOperationException ex)
-                {
-                    await MainThread.InvokeOnMainThreadAsync(() => DisplayAlert("Ошибка", "Bluetooth не готов", "OK"));
+                    // Передаем данные
+                    await _bluetoothService.TransmitterData_write(value, 0x02, 0x01, index, subindex, true);
+
+                    Debug.WriteLine($"Data Sent - Value: {value}, Index: {BitConverter.ToString(index)}, Subindex: {subindex:X2}");
+
+                    await MainThread.InvokeOnMainThreadAsync(() =>
+                        DisplayAlert("Отправлено", $"Value: {value}\nIndex: {BitConverter.ToString(index)}\nSubindex: {subindex:X2}", "OK"));
                 }
                 catch (Exception ex)
                 {
-                    await MainThread.InvokeOnMainThreadAsync(() => DisplayAlert("Ошибка", "Не удалось отправить данные", "OK"));
-                    System.Diagnostics.Debug.WriteLine(ex);
-                }
-                finally
-                {
-                    try { (sender as VisualElement).IsEnabled = true; } catch { }
+                    Debug.WriteLine($"Error sending data: {ex}");
+                    await DisplayAlert("Ошибка", "Не удалось отправить данные", "OK");
                 }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"OnPage1Tapped exception: {ex}");
+                Debug.WriteLine($"OnPage1Tapped Exception: {ex}");
             }
         }
 
 
+        // Метод для парсинга команды и извлечения индекса и субиндекса
+        private static (byte[] index, byte subindex) ParseCommand(string command)
+        {
+            // Проверка на минимальную длину строки (не менее 13 символов для индекса + субиндекса)
+            if (string.IsNullOrEmpty(command) || command.Length < 13)
+                throw new ArgumentException("Строка команды должна быть длиной не менее 13 символов");
 
+            // Извлекаем индекс (4 байта) как HEX-строку и преобразуем в массив байтов
+            var indexHex = command.Substring(4, 8); // Символы с позиции 4 (включительно) — 8 символов после заголовка
+            byte[] index = HexStringToBytes(indexHex);
+
+            // Извлекаем субиндекс (1 байт) как HEX-строку и преобразуем в 1 байт
+            var subindexHex = command.Substring(12, 2); // Символы с позиции 12 (включительно) — 2 символа выделенного субиндекса
+            byte subindex = byte.Parse(subindexHex, System.Globalization.NumberStyles.HexNumber);
+
+            return (index, subindex);
+        }
+
+        // Утилита преобразования HEX-строки в массив байтов
+        private static byte[] HexStringToBytes(string hex)
+        {
+            if (string.IsNullOrEmpty(hex)) return Array.Empty<byte>();
+            hex = hex.Replace(" ", "");
+            if (hex.Length % 2 != 0) throw new ArgumentException("Hex string must have even length");
+            return Enumerable.Range(0, hex.Length / 2)
+                             .Select(i => Convert.ToByte(hex.Substring(i * 2, 2), 16))
+                             .ToArray();
+        }
+        ////////////////
 
     }
 }
@@ -373,3 +396,73 @@ namespace Scb_Electronmash
 //    CounterBtn.Text = $"Clicked {count} times";
 
 //SemanticScreenReader.Announce(CounterBtn.Text);
+
+
+
+//private async void OnPage1Tapped(object sender, EventArgs e)
+//{
+//    try
+//    {
+//        // Получаем значение из Entry как раньше...
+//        var source = (sender as TapGestureRecognizer)?.Parent as VisualElement ?? sender as VisualElement;
+//        var parent = source;
+//        while (parent != null && !(parent is Grid)) parent = parent.Parent as VisualElement;
+
+//        string value = null;
+//        if (parent is Grid grid)
+//        {
+//            var entry = grid.Children.OfType<Entry>().FirstOrDefault(en => Grid.GetColumn(en) == 1)
+//                        ?? grid.Children.OfType<Entry>().FirstOrDefault();
+//            value = entry?.Text?.Trim();
+//        }
+
+//        if (string.IsNullOrWhiteSpace(value))
+//        {
+//            await MainThread.InvokeOnMainThreadAsync(() => DisplayAlert("Ошибка", "Поле пустое", "OK"));
+//            //   await _bluetoothService.TransmitterData();
+//            return;
+//        }
+
+//        // Простая валидация/ограничение длины
+//        if (value.Length > 250)
+//        {
+//            await MainThread.InvokeOnMainThreadAsync(() => DisplayAlert("Ошибка", "Слишком длинная строка", "OK"));
+//            return;
+//        }
+
+//        // Откл. UI / защита от повторных тапов — пример: отключаем sender, можно кастомизировать
+//        try { (sender as VisualElement).IsEnabled = false; } catch { }
+
+//        byte usedSubindex = 0x02;
+
+//        await Task.Delay(100);
+//        try
+//        {
+//            await _bluetoothService.TransmitterData_write(value, 0x02, 0x01, null, usedSubindex, true);
+
+//            await MainThread.InvokeOnMainThreadAsync(() => DisplayAlert("OK", $"Отправлено: {value}", "OK"));
+//        }
+//        catch (ArgumentOutOfRangeException ex)
+//        {
+//            await MainThread.InvokeOnMainThreadAsync(() => DisplayAlert("Ошибка", "Данные слишком длинные", "OK"));
+//        }
+//        catch (InvalidOperationException ex)
+//        {
+//            await MainThread.InvokeOnMainThreadAsync(() => DisplayAlert("Ошибка", "Bluetooth не готов", "OK"));
+//        }
+//        catch (Exception ex)
+//        {
+//            await MainThread.InvokeOnMainThreadAsync(() => DisplayAlert("Ошибка", "Не удалось отправить данные", "OK"));
+//            System.Diagnostics.Debug.WriteLine(ex);
+//        }
+//        finally
+//        {
+//            try { (sender as VisualElement).IsEnabled = true; } catch { }
+//        }
+//    }
+//    catch (Exception ex)
+//    {
+//        System.Diagnostics.Debug.WriteLine($"OnPage1Tapped exception: {ex}");
+//    }
+//}
+
