@@ -50,7 +50,7 @@
                             Clicked="OnClear_Data_Dev"
                             Grid.Column="1" />
                     <Button Margin="8"
-                            Text="Tx_Read"
+                            Text="Read"
                             FontAttributes="Bold"
                             FontSize="14"
                             TextColor="#ffffff"
@@ -441,9 +441,204 @@
                                                     FontAttributes="Bold" />
                                             </Border>
                                         </Grid>
-                                        
-                                        
-                                        <Border Stroke="#0B0101"
+
+
+
+
+                                        <!-- Колонка 0: "кнопка" (ширина по содержимому)  ServerPort2  -->
+                                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8" HorizontalOptions="Fill" VerticalOptions="Center" Margin="0">
+
+                                            <Border Grid.Column="0"
+                                             Stroke="#0B0101"
+                                             StrokeThickness="1"
+                                             StrokeShape="RoundRectangle 6"
+                                             BackgroundColor="#107f36"
+                                             Padding="8"
+                                             HeightRequest="40"
+                                             HorizontalOptions="Start">
+                                                <Border.GestureRecognizers>
+                                                    <TapGestureRecognizer Tapped="OnShleyfTapped" CommandParameter="2|ServerPort2" />
+                                                </Border.GestureRecognizers>
+
+                                                <Label Text="Config.ServerPort_2"
+                                                    VerticalOptions="Center"
+                                                    HorizontalOptions="Start"
+                                                    InputTransparent="True"
+                                                    TextColor="#000"
+                                                    FontAttributes="Bold" />
+                                            </Border>
+
+                                            <!-- Колонка 1: Entry занимает всё оставшееся пространство -->
+
+                                            <!-- Сам Entry внутри Border -->
+                                            <Entry x:Name="ServerPort2Entry"
+                                              Grid.Column="1"  
+                                            VerticalOptions="Center"
+                                            HorizontalOptions="Fill"
+                                            Margin="6,0,0,0"
+                                            Text=""
+                                            TextColor="#120B7A"
+                                            FontAttributes="Bold"
+                                            FontSize="18"
+                                            Keyboard="Numeric"
+                                            BackgroundColor="Transparent"/>
+
+
+                                            <!-- Колонка 2: красный "тапет" для записи -->
+                                            <Border Grid.Column="2"
+                                              Stroke="#0B0101"
+                                              StrokeThickness="1"
+                                              StrokeShape="RoundRectangle 6"
+                                              BackgroundColor="#990000"
+                                              Padding="10"
+                                              HeightRequest="40"
+                                              HorizontalOptions="Start">
+                                                <Border.GestureRecognizers>
+                                                    <TapGestureRecognizer Tapped="OnPage1Tapped" CommandParameter="2|ServerPort2" />
+                                                </Border.GestureRecognizers>
+
+                                                <Label Text="Write"
+                                                 VerticalOptions="Center"
+                                                 HorizontalOptions="Start"
+                                                 InputTransparent="True"
+                                                 TextColor="#000"
+                                                 FontAttributes="Bold" />
+                                            </Border>
+                                        </Grid>
+
+
+
+                                        <!-- Колонка 0: "кнопка" (ширина по содержимому)  2|ipServer1  -->
+                                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8" HorizontalOptions="Fill" VerticalOptions="Center" Margin="0">
+
+                                            <Border Grid.Column="0"
+                                            Stroke="#0B0101"
+                                            StrokeThickness="1"
+                                            StrokeShape="RoundRectangle 6"
+                                            BackgroundColor="#107f36"
+                                            Padding="8"
+                                            HeightRequest="40"  
+                                                WidthRequest="132"
+                                                
+                                                HorizontalOptions="Start">
+                                                <Border.GestureRecognizers>
+                                                    <TapGestureRecognizer Tapped="OnShleyfTapped" CommandParameter="2|ipServer1" />
+                                                </Border.GestureRecognizers>
+
+                                                <Label Text="Config.ipServer_1"
+                                                   VerticalOptions="Center"
+                                                   HorizontalOptions="Start"  
+                                                    InputTransparent="True"
+                                                       TextColor="#000"
+                                                       FontAttributes="Bold" />
+                                            </Border>
+
+                                            <!-- Колонка 1: Entry занимает всё оставшееся пространство -->
+
+                                            <!-- Сам Entry внутри Border -->
+                                            <Entry x:Name="ipServer1Entry"
+                                              Grid.Column="1"  
+                                            VerticalOptions="Center"
+                                            HorizontalOptions="Fill"
+                                            Margin="6,0,0,0"
+                                            Text=""
+                                            TextColor="#120B7A"
+                                            FontAttributes="Bold"
+                                            FontSize="18"
+                                            Keyboard="Text"
+                                            BackgroundColor="Transparent"/>
+
+
+                                            <!-- Колонка 2: красный "тапет" для записи -->
+                                            <Border Grid.Column="2"
+                                              Stroke="#0B0101"
+                                              StrokeThickness="1"
+                                              StrokeShape="RoundRectangle 6"
+                                              BackgroundColor="#990000"
+                                              Padding="10"
+                                              HeightRequest="40"
+                                              HorizontalOptions="Start">
+                                                <Border.GestureRecognizers>
+                                                    <TapGestureRecognizer Tapped="OnPage1Tapped" CommandParameter="2|ipServer1" />
+                                                </Border.GestureRecognizers>
+
+                                                <Label Text="Write"
+                                                 VerticalOptions="Center"
+                                                 HorizontalOptions="Start"
+                                                 InputTransparent="True"
+                                                 TextColor="#000"
+                                                 FontAttributes="Bold" />
+                                            </Border>
+                                        </Grid>
+
+
+                                        <!-- Колонка 0: "кнопка" (ширина по содержимому)  2|ipServer2  -->
+                                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8" HorizontalOptions="Fill" VerticalOptions="Center" Margin="0">
+
+                                            <Border Grid.Column="0"
+                                                 Stroke="#0B0101"
+                                                 StrokeThickness="1"
+                                                 StrokeShape="RoundRectangle 6"
+                                                 BackgroundColor="#107f36"
+                                                 Padding="8"
+                                                 HeightRequest="40"  
+                                                     WidthRequest="132"
+         
+                                                     HorizontalOptions="Start">
+                                                <Border.GestureRecognizers>
+                                                    <TapGestureRecognizer Tapped="OnShleyfTapped" CommandParameter="2|ipServer2" />
+                                                </Border.GestureRecognizers>
+
+                                                <Label Text="Config.ipServer_2"
+                                                    VerticalOptions="Center"
+                                                    HorizontalOptions="Start"  
+                                                     InputTransparent="True"
+                                                        TextColor="#000"
+                                                        FontAttributes="Bold" />
+                                            </Border>
+
+                                            <!-- Колонка 1: Entry занимает всё оставшееся пространство -->
+
+                                            <!-- Сам Entry внутри Border -->
+                                            <Entry x:Name="ipServer2Entry"
+                                               Grid.Column="1"  
+                                             VerticalOptions="Center"
+                                             HorizontalOptions="Fill"
+                                             Margin="6,0,0,0"
+                                             Text=""
+                                             TextColor="#120B7A"
+                                             FontAttributes="Bold"
+                                             FontSize="18"
+                                             Keyboard="Text"
+                                             BackgroundColor="Transparent"/>
+
+
+                                            <!-- Колонка 2: красный "тапет" для записи -->
+                                            <Border Grid.Column="2"
+                                                   Stroke="#0B0101"
+                                                   StrokeThickness="1"
+                                                   StrokeShape="RoundRectangle 6"
+                                                   BackgroundColor="#990000"
+                                                   Padding="10"
+                                                   HeightRequest="40"
+                                                   HorizontalOptions="Start">
+                                                <Border.GestureRecognizers>
+                                                    <TapGestureRecognizer Tapped="OnPage1Tapped" CommandParameter="2|ipServer2" />
+                                                </Border.GestureRecognizers>
+
+                                                <Label Text="Write"
+                                                  VerticalOptions="Center"
+                                                  HorizontalOptions="Start"
+                                                  InputTransparent="True"
+                                                  TextColor="#000"
+                                                  FontAttributes="Bold" />
+                                            </Border>
+                                        </Grid>
+
+
+
+
+                                        <!--<Border Stroke="#0B0101"
                                                 StrokeThickness="1"
                                                 StrokeShape="RoundRectangle 6"
                                                 BackgroundColor="#107f36"
@@ -459,7 +654,7 @@
                                                InputTransparent="True"
                                                TextColor="#000"
                                                FontAttributes="Bold" />
-                                        </Border>
+                                        </Border>-->
 
                                         <Border Stroke="#0B0101"
                                             StrokeThickness="1"

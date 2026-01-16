@@ -1,4 +1,8 @@
-﻿using System.Diagnostics;
+﻿
+#if ANDROID
+using Scb_Electronmash.Platforms.Android;
+#endif
+using System.Diagnostics;
 using System.Threading.Tasks;
 
 namespace Scb_Electronmash
@@ -94,6 +98,19 @@ namespace Scb_Electronmash
         public MainPage(IBluetooth_service bluetooth)
         {
             InitializeComponent();
+
+            // Запускаем Foreground Service
+            //Когда приложение входит в главную страницу (MainPage), выполняется код, который создаёт Intent.
+            //Этот Intent сообщает системе Android: "Запусти Foreground Service (UiPriorityService)", создавая запрос на запуск.
+#if ANDROID
+            var intent = new Android.Content.Intent(Android.App.Application.Context, typeof(UiPriorityService));
+            Android.App.Application.Context.StartService(intent);
+#endif
+
+
+
+
+
             _bluetoothService = bluetooth;
           //  BindingContext = this;
 

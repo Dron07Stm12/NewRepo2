@@ -824,12 +824,16 @@ namespace Scb_Electronmash.Platforms.Android
                                 // 3. Копируем данные начиная с индекса 8
                                 Array.Copy(frameBytes, 8, data, 0, frameBytes.Length - 9);
                                 string text = System.Text.Encoding.ASCII.GetString(data).Trim('\0').Trim();
-                                DataReceived?.Invoke($"RX-> {fullHex}\nиндекс: {indexlString}\nName:{text}");
+                                if (frameBytes.Length != 9) { DataReceived?.Invoke($"субиндекс: {subindex}  индекс: {indexlString}\nName: {text}"); }
+                              //  DataReceived?.Invoke($"RX-> {fullHex}\nиндекс: {indexlString}\nName:{text}");
+
+                              //
+
                             }
 
 
 
-                            if (indexlString == "00002200") //Страница 2 
+                            if (indexlString == "00002200") //Страница 2 TK_Setting
                             {
                                 // 2. Создаём массив для данных
                                 // создаём и заполняем массив payload безопасно
@@ -858,10 +862,10 @@ namespace Scb_Electronmash.Platforms.Android
                                 string text = textLen > 0
                                     ? System.Text.Encoding.ASCII.GetString(data, 0, textLen).Trim()
                                     : string.Empty;
-
-                                //    DataReceived?.Invoke($"RX-> {fullHex}\nиндекс: {indexlString}\nCodeObject1: {text}");
-                                    DataReceived?.Invoke($"субиндекс: {subindex}  индекс: {indexlString}\nCodeObject1: {text}");
-
+                                 
+                                 //   DataReceived?.Invoke($"кол-во байт: {frameBytes.Length}");
+                                    if (frameBytes.Length != 9) { DataReceived?.Invoke($"субиндекс: {subindex}  индекс: {indexlString}\nCodeObject1: {text}"); }
+                                  //  DataReceived?.Invoke($"субиндекс: {subindex}  индекс: {indexlString}\nCodeObject1_: {text}");
                                 }
 
                                 if (subindex == 0x02)
@@ -881,8 +885,8 @@ namespace Scb_Electronmash.Platforms.Android
                                         : string.Empty;
 
                                     //    DataReceived?.Invoke($"RX-> {fullHex}\nиндекс: {indexlString}\nCodeObject1: {text}");
-                                    DataReceived?.Invoke($"субиндекс: {subindex}  индекс: {indexlString}\nAccessPoint1: {text}");
-
+                                    //DataReceived?.Invoke($"субиндекс: {subindex}  индекс: {indexlString}\nAccessPoint1: {text}");
+                                    if (frameBytes.Length != 9) { DataReceived?.Invoke($"субиндекс: {subindex}  индекс: {indexlString}\nAccessPoint1: {text}"); }
                                 }
 
 
@@ -902,14 +906,10 @@ namespace Scb_Electronmash.Platforms.Android
                                         ? System.Text.Encoding.ASCII.GetString(data, 0, textLen).Trim()
                                         : string.Empty;
 
-                                    //    DataReceived?.Invoke($"RX-> {fullHex}\nиндекс: {indexlString}\nCodeObject1: {text}");
-                                    DataReceived?.Invoke($"субиндекс: {subindex}  индекс: {indexlString}\nAccessPoint2: {text}");
+                                    if (frameBytes.Length != 9) { DataReceived?.Invoke($"субиндекс: {subindex}  индекс: {indexlString}\nAccessPoint2: {text}"); }
+                                  //  DataReceived?.Invoke($"субиндекс: {subindex}  индекс: {indexlString}\nAccessPoint2: {text}");
 
                                 }
-
-
-
-
 
 
 
@@ -929,8 +929,73 @@ namespace Scb_Electronmash.Platforms.Android
                                         ? System.Text.Encoding.ASCII.GetString(data, 0, textLen).Trim()
                                         : string.Empty;
 
-                                    //    DataReceived?.Invoke($"RX-> {fullHex}\nиндекс: {indexlString}\nCodeObject1: {text}");
-                                    DataReceived?.Invoke($"субиндекс: {subindex}  индекс: {indexlString}\nServerPort1: {text}");
+                                    if (frameBytes.Length != 9) { DataReceived?.Invoke($"субиндекс: {subindex}  индекс: {indexlString}\nServerPort1: {text}"); }
+                                 //   DataReceived?.Invoke($"субиндекс: {subindex}  индекс: {indexlString}\nServerPort1: {text}");
+
+                                }
+
+
+                                if (subindex == 0x05)
+                                {
+                                    byte[] data = length == 0 ? Array.Empty<byte>() : new byte[128];
+
+                                    // 3. Копируем данные начиная с индекса 8 — но безопасно, не выходя за границы
+                                    int maxFromFrame = Math.Max(0, frameBytes.Length - 9);              // сколько байт есть от payloadStart(8) до предпоследнего (не включая чек‑байт)
+                                    int copyCount = Math.Min(data.Length, maxFromFrame);               // сколько реально можно скопировать в data
+                                    if (copyCount > 0) Array.Copy(frameBytes, 8, data, 0, copyCount);
+
+                                    // Декодируем только первые байты до NUL (0x00)
+                                    int nulIndex = Array.FindIndex(data, 0, copyCount, b => b == 0x00);
+                                    int textLen = nulIndex >= 0 ? nulIndex : copyCount;
+                                    string text = textLen > 0
+                                        ? System.Text.Encoding.ASCII.GetString(data, 0, textLen).Trim()
+                                        : string.Empty;
+
+                                    if (frameBytes.Length != 9) { DataReceived?.Invoke($"субиндекс: {subindex}  индекс: {indexlString}\nServerPort2: {text}"); }
+                                    //   DataReceived?.Invoke($"субиндекс: {subindex}  индекс: {indexlString}\nServerPort1: {text}");
+
+                                }
+
+                                if (subindex == 0x06)
+                                {
+                                    byte[] data = length == 0 ? Array.Empty<byte>() : new byte[128];
+
+                                    // 3. Копируем данные начиная с индекса 8 — но безопасно, не выходя за границы
+                                    int maxFromFrame = Math.Max(0, frameBytes.Length - 9);              // сколько байт есть от payloadStart(8) до предпоследнего (не включая чек‑байт)
+                                    int copyCount = Math.Min(data.Length, maxFromFrame);               // сколько реально можно скопировать в data
+                                    if (copyCount > 0) Array.Copy(frameBytes, 8, data, 0, copyCount);
+
+                                    // Декодируем только первые байты до NUL (0x00)
+                                    int nulIndex = Array.FindIndex(data, 0, copyCount, b => b == 0x00);
+                                    int textLen = nulIndex >= 0 ? nulIndex : copyCount;
+                                    string text = textLen > 0
+                                        ? System.Text.Encoding.ASCII.GetString(data, 0, textLen).Trim()
+                                        : string.Empty;
+
+                                    if (frameBytes.Length != 9) { DataReceived?.Invoke($"субиндекс: {subindex}  индекс: {indexlString}\nipServer1: {text}"); }
+                                    //   DataReceived?.Invoke($"субиндекс: {subindex}  индекс: {indexlString}\nServerPort1: {text}");
+
+                                }
+
+
+                                if (subindex == 0x07)
+                                {
+                                    byte[] data = length == 0 ? Array.Empty<byte>() : new byte[128];
+
+                                    // 3. Копируем данные начиная с индекса 8 — но безопасно, не выходя за границы
+                                    int maxFromFrame = Math.Max(0, frameBytes.Length - 9);              // сколько байт есть от payloadStart(8) до предпоследнего (не включая чек‑байт)
+                                    int copyCount = Math.Min(data.Length, maxFromFrame);               // сколько реально можно скопировать в data
+                                    if (copyCount > 0) Array.Copy(frameBytes, 8, data, 0, copyCount);
+
+                                    // Декодируем только первые байты до NUL (0x00)
+                                    int nulIndex = Array.FindIndex(data, 0, copyCount, b => b == 0x00);
+                                    int textLen = nulIndex >= 0 ? nulIndex : copyCount;
+                                    string text = textLen > 0
+                                        ? System.Text.Encoding.ASCII.GetString(data, 0, textLen).Trim()
+                                        : string.Empty;
+
+                                    if (frameBytes.Length != 9) { DataReceived?.Invoke($"субиндекс: {subindex}  индекс: {indexlString}\nipServer2: {text}"); }
+                                    //   DataReceived?.Invoke($"субиндекс: {subindex}  индекс: {indexlString}\nServerPort1: {text}");
 
                                 }
 
@@ -964,8 +1029,9 @@ namespace Scb_Electronmash.Platforms.Android
                                 //// Вызов события с десятичным выводом
                                 ////    DataReceived?.Invoke($"RX -> {fullHex} ток = {decimalString}mA");
 
-                                DataReceived?.Invoke($"RX-> {fullHex}\n индекс: {indexlString}, субиндекс: {subindexString}\n ток: {decimalString}mA");
-                              //  DataReceived?.Invoke($"RX CHK FAIL-> {fullHex}\n индекс: {indexlString}\n ток: {decimalString}mA");
+                                DataReceived?.Invoke($" индекс: {indexlString}, субиндекс: {subindexString}\n ток: {decimalString}mA");
+                                // DataReceived?.Invoke($"RX-> {fullHex}\n индекс: {indexlString}, субиндекс: {subindexString}\n ток: {decimalString}mA");
+                                //  DataReceived?.Invoke($"RX CHK FAIL-> {fullHex}\n индекс: {indexlString}\n ток: {decimalString}mA");
 
                             }
 
