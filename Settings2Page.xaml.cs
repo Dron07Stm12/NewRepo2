@@ -30,7 +30,7 @@ public partial class Settings2Page : ContentPage
 
         _bluetoothService = bluetooth;
         // Привязываем коллекцию к CollectionView
-        // Когда ты делаешь: DevicesCollectionView.ItemsSource = _devices; — то говоришь CollectionView: «Вот моя коллекция данных — отображай её».
+        // Когда мы делаем: DevicesCollectionView.ItemsSource = _devices; — то говорим CollectionView: «Вот моя коллекция данных — отображай её».
         DevicesCollectionView.ItemsSource = _devices;
         //// Подписываемся на событие обнаружения устройства
         //_bluetoothService.DeviceDiscovered += OnDeviceDiscovered;
